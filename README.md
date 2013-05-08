@@ -2,21 +2,21 @@ gimme-bitcoin-address
 =====================
 
 gimme-bitcoin-address is a standalone bitcoin key pair generator written in Go.
-It generates an ECDSA secp256k1 key pair, writes the private key in Wallet
-Import Format to a text file in the directory specified as the first argument,
-and writes the corresponding public key in Bitcoin Address format to standard
-output.
+It generates an ECDSA secp256k1 key pair, writes the private key in **Wallet
+Import Format** to a text file in the directory specified as the first
+argument, and writes the corresponding public key in **Bitcoin Address** format
+to standard output.
 
 gimme-bitcoin-address is intended to be a lightweight tool to generate
 one-time-use Bitcoin Addresses.
 
-NOTE: I had to implement elliptic curve operations and ECDSA key generation
-manually for secp256k1, because golang's crypto/ecdsa only supports curves with
-a=-3. While I am not worried about its correctness or ability to generate
-validate bitcoin key pairs, it may be vulnerable to timing attacks during the
-public key computation. Use at your own risk in a public facing setting (e.g.
-web). If you have some experience or thoughts on this matter, please let me
-know!
+**Important Note:** I had to implement elliptic curve operations and ECDSA key
+generation manually for secp256k1, because golang's crypto/ecdsa only supports
+curves with a=-3. While I am not worried about its correctness or ability to
+generate validate bitcoin key pairs, it may be vulnerable to timing attacks
+during the public key computation. Use at your own risk in a public facing
+setting (e.g.  web). If you have some experience or thoughts on this matter,
+please let me know!
 
 Feel free to report any issues, bug reports, or suggestions at github or by
 email at vsergeev at gmail.
