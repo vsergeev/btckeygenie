@@ -1,7 +1,8 @@
 /*
  * gimme-bitcoin-address v1.0 - Vanya A. Sergeev - vsergeev at gmail
  *
- * Bitcoin Keypair Generator. See README.md for more information.
+ * Bitcoin keypair generator written in Go. See README.md for more information.
+ * MIT licensed.
  */
 
 package main
@@ -17,8 +18,6 @@ import (
 
     "code.google.com/p/go.crypto/ripemd160"
 )
-
-/******************************************************************************/
 
 /******************************************************************************/
 /* Elliptic Curve Business */
@@ -60,14 +59,14 @@ func (p *Point) dump() {
 /* README: Some of the arithmetic routines below, used during the ECDSA public
  * key computation, may be vulnerable to timing attacks. Use at your own risk
  * in a public facing setting (e.g. web). If you have some experience or
- * thoughts on this matter, please let me know! */
+ * thoughts on this matter, please let me know. */
 
-/*** Element Arithmetic on Curve ***/
+/*** Element Arithmetic on Finite Field ***/
 
 /* NOTE: Returning a new z each time in these element arithmetic is very
  * space inefficient, but the alternate accumulator based design makes the
- * higher level point arithmetic functions look absolutely hideous. But I may
- * still change this in the future. */
+ * higher level point arithmetic functions look absolutely hideous. I may still
+ * change this in the future. */
 
 /* z = (x + y) % p */
 func (ec *EllipticCurve) elem_add(x *big.Int, y *big.Int) (z *big.Int) {
@@ -98,12 +97,14 @@ func (ec *EllipticCurve) elem_sub(x *big.Int, y *big.Int) (z *big.Int) {
 func (ec *EllipticCurve) elem_mul(x *big.Int, y *big.Int) (z *big.Int) {
     n := new(big.Int).Set(x)
     z = big.NewInt(0)
+
     for i := 0; i < y.BitLen(); i++ {
         if y.Bit(i) == 1 {
            z = ec.elem_add(z, n)
         }
         n = ec.elem_add(n, n)
     }
+
     return z
 }
 
@@ -226,8 +227,8 @@ func (ec *EllipticCurve) point_scalar_multiply(k *big.Int, P Point) (Q Point) {
 /******************************************************************************/
 
 /* We make our own Bitcoin Private Key and Public Key structs here so no one
- * tries to use this code with crypto/ecdsa, which doesn't support the sec256k1
- * elliptic curve that bitcoin uses */
+ * tries to use this code with crypto/ecdsa, which doesn't support the
+ * secp256k1 elliptic curve that bitcoin uses */
 
 type BitcoinPrivateKey struct {
     D *big.Int
@@ -292,15 +293,15 @@ func Bitcoin_Base58(b []byte) (s string) {
     zero := big.NewInt(0)
     s = ""
 
-    /* while x > 0 */
+    /* While x > 0 */
     for x.Cmp(zero) > 0 {
         /* x, r = (x / 58, x % 58) */
         x.QuoRem(x, m, r)
-        /* prepand ASCII character */
+        /* Prepend ASCII character */
         s = string(BITCOIN_BASE58_TABLE[r.Int64()]) + s
     }
 
-    /* for number of leading 0's in bytes, prepend 1 */
+    /* For number of leading 0's in bytes, prepend 1 */
     for _, v := range b {
         if v != 0 {
             break
