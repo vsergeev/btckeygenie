@@ -1,7 +1,7 @@
 gimme-bitcoin-address
 =====================
 
-gimme-bitcoin-address is a standalone Bitcoin keypair generator written in Go.
+gimme-bitcoin-address is a standalone Bitcoin address generator written in Go.
 It generates an ECDSA secp256k1 keypair, writes the private key in **Wallet
 Import Format** to a text file to directory specified with the first argument,
 and writes the corresponding public key in **Bitcoin Address** format to
@@ -17,6 +17,10 @@ validate bitcoin keypairs, it may be vulnerable to timing attacks during the
 public key computation. Use at your own risk in a public facing setting (e.g.
 web). If you have some experience or thoughts on this matter, please let me
 know.
+
+gimme-bitcoin-address is MIT licensed. See the provided LICENSE file.
+
+Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :)
 
 Feel free to report any issues, bug reports, or suggestions at github or by
 email at vsergeev at gmail.
@@ -53,10 +57,4 @@ Building
     $ cd gimme-bitcoin-address
     $ go get code.google.com/p/go.crypto/ripemd160
     $ go build
-
-
-LICENSE
--------
-
-gimme-bitcoin-address is MIT licensed. See the provided LICENSE file.
 
