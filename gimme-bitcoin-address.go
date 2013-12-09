@@ -462,7 +462,8 @@ func main() {
     /* Usage */
     if len(os.Args) < 2 {
         fmt.Printf("Usage: %s <private key directory path> [label]\n\n", os.Args[0])
-        fmt.Printf("v1.0 | https://github.com/vsergeev/gimme-bitcoin-address\n")
+        fmt.Printf("Private Key Filename Format\n\n\tYYYY-MM-DD_<Unix Timestamp>_<PID>_<optional label>.txt\n\n")
+        fmt.Printf("Version 1.0 - https://github.com/vsergeev/gimme-bitcoin-address\n")
         os.Exit(1)
     }
 
