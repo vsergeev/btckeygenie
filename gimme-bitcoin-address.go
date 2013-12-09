@@ -257,7 +257,7 @@ func Bitcoin_GenerateKeypair() (prikey BitcoinPrivateKey, pubkey BitcoinPublicKe
     /* Random integer uniformly selected from [0, n-1) range */
     d, err := rand.Int(rand.Reader, new(big.Int).Sub(curve.n, big.NewInt(1)))
     if err != nil {
-        return prikey, pubkey, fmt.Errorf("Error: generating random priviate key.")
+        return prikey, pubkey, fmt.Errorf("Error: generating random private key.")
     }
     /* Add one to shift d to [1, n) range */
     d.Add(d, big.NewInt(1))
