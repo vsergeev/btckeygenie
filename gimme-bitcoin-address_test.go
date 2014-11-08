@@ -1,4 +1,4 @@
-package main
+package gimme_bitcoin_address
 
 import (
 	"bytes"
