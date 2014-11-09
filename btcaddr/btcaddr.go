@@ -38,19 +38,19 @@ func GenerateKeyPair() (prikey BitcoinPrivateKey, pubkey BitcoinPublicKey, err e
 
 	/* secp256k1 elliptic curve parameters */
 	var curve = &EllipticCurve{}
-	curve.p, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
-	curve.a, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
-	curve.b, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
+	curve.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
+	curve.A, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
+	curve.B, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
 	curve.G.X, _ = new(big.Int).SetString("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16)
 	curve.G.Y, _ = new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
-	curve.n, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
-	curve.h, _ = new(big.Int).SetString("01", 16)
+	curve.N, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
+	curve.H, _ = new(big.Int).SetString("01", 16)
 
 	/* See SEC1 pg.23 http://www.secg.org/collateral/sec1_final.pdf */
 
 	/* Select private key d randomly from [1, n) */
 	/* Random integer uniformly selected from [0, n-1) range */
-	d, err := rand.Int(rand.Reader, new(big.Int).Sub(curve.n, big.NewInt(1)))
+	d, err := rand.Int(rand.Reader, new(big.Int).Sub(curve.N, big.NewInt(1)))
 	if err != nil {
 		return prikey, pubkey, fmt.Errorf("Error: generating random private key.")
 	}

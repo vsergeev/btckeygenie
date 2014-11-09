@@ -25,12 +25,12 @@ type Point struct {
 
 /* y**2 = x**3 + a*x + b */
 type EllipticCurve struct {
-	a *big.Int
-	b *big.Int
-	p *big.Int
+	A *big.Int
+	B *big.Int
+	P *big.Int
 	G Point
-	n *big.Int
-	h *big.Int
+	N *big.Int
+	H *big.Int
 }
 
 /* Dump a Point for debugging */
@@ -64,7 +64,7 @@ func (p *Point) dump() {
 func (ec *EllipticCurve) elem_add(x *big.Int, y *big.Int) (z *big.Int) {
 	z = new(big.Int)
 	z.Add(x, y)
-	z.Mod(z, ec.p)
+	z.Mod(z, ec.P)
 	return z
 }
 
@@ -78,7 +78,7 @@ func (ec *EllipticCurve) elem_sub(x *big.Int, y *big.Int) (z *big.Int) {
 
 		/* x <= y */
 	} else {
-		z.Add(x, ec.p)
+		z.Add(x, ec.P)
 		z.Sub(z, y)
 	}
 
@@ -111,8 +111,8 @@ func (ec *EllipticCurve) isOnCurve(P Point) bool {
 			ec.elem_mul(
 				ec.elem_mul(P.X, P.X),
 				P.X),
-			ec.elem_mul(ec.a, P.X)),
-		ec.b)
+			ec.elem_mul(ec.A, P.X)),
+		ec.B)
 
 	if lhs.Cmp(rhs) == 0 {
 		return true
@@ -145,9 +145,9 @@ func (ec *EllipticCurve) point_add(P Point, Q Point) (R Point) {
 		num := ec.elem_add(
 			ec.elem_mul(big.NewInt(3),
 				ec.elem_mul(P.X, P.X)),
-			ec.a)
+			ec.A)
 		den := ec.elem_mul(big.NewInt(2), P.Y)
-		den.ModInverse(den, ec.p)
+		den.ModInverse(den, ec.P)
 
 		lambda := ec.elem_mul(num, den)
 
@@ -167,7 +167,7 @@ func (ec *EllipticCurve) point_add(P Point, Q Point) (R Point) {
 
 		num := ec.elem_sub(Q.Y, P.Y)
 		den := ec.elem_sub(Q.X, P.X)
-		den.ModInverse(den, ec.p)
+		den.ModInverse(den, ec.P)
 
 		lambda := ec.elem_mul(num, den)
 
@@ -201,7 +201,7 @@ func (ec *EllipticCurve) point_scalar_multiply(k *big.Int, P Point) (Q Point) {
 	R1.X = new(big.Int).Set(P.X)
 	R1.Y = new(big.Int).Set(P.Y)
 
-	for i := ec.n.BitLen() - 1; i >= 0; i-- {
+	for i := ec.N.BitLen() - 1; i >= 0; i-- {
 		if k.Bit(i) == 0 {
 			R1 = ec.point_add(R0, R1)
 			R0 = ec.point_add(R0, R0)
