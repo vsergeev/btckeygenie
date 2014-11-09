@@ -32,12 +32,12 @@ type Point struct {
 
 /* y**2 = x**3 + a*x + b */
 type EllipticCurve struct {
-	a *big.Int
-	b *big.Int
-	p *big.Int
+	A *big.Int
+	B *big.Int
+	P *big.Int
 	G Point
-	n *big.Int
-	h *big.Int
+	N *big.Int
+	H *big.Int
 }
 
 /* Dump a Point for debugging */
@@ -71,7 +71,7 @@ func (p *Point) dump() {
 func (ec *EllipticCurve) elem_add(x *big.Int, y *big.Int) (z *big.Int) {
 	z = new(big.Int)
 	z.Add(x, y)
-	z.Mod(z, ec.p)
+	z.Mod(z, ec.P)
 	return z
 }
 
@@ -85,7 +85,7 @@ func (ec *EllipticCurve) elem_sub(x *big.Int, y *big.Int) (z *big.Int) {
 
 		/* x <= y */
 	} else {
-		z.Add(x, ec.p)
+		z.Add(x, ec.P)
 		z.Sub(z, y)
 	}
 
@@ -118,8 +118,8 @@ func (ec *EllipticCurve) isOnCurve(P Point) bool {
 			ec.elem_mul(
 				ec.elem_mul(P.X, P.X),
 				P.X),
-			ec.elem_mul(ec.a, P.X)),
-		ec.b)
+			ec.elem_mul(ec.A, P.X)),
+		ec.B)
 
 	if lhs.Cmp(rhs) == 0 {
 		return true
@@ -152,9 +152,9 @@ func (ec *EllipticCurve) point_add(P Point, Q Point) (R Point) {
 		num := ec.elem_add(
 			ec.elem_mul(big.NewInt(3),
 				ec.elem_mul(P.X, P.X)),
-			ec.a)
+			ec.A)
 		den := ec.elem_mul(big.NewInt(2), P.Y)
-		den.ModInverse(den, ec.p)
+		den.ModInverse(den, ec.P)
 
 		lambda := ec.elem_mul(num, den)
 
@@ -174,7 +174,7 @@ func (ec *EllipticCurve) point_add(P Point, Q Point) (R Point) {
 
 		num := ec.elem_sub(Q.Y, P.Y)
 		den := ec.elem_sub(Q.X, P.X)
-		den.ModInverse(den, ec.p)
+		den.ModInverse(den, ec.P)
 
 		lambda := ec.elem_mul(num, den)
 
@@ -208,7 +208,7 @@ func (ec *EllipticCurve) point_scalar_multiply(k *big.Int, P Point) (Q Point) {
 	R1.X = new(big.Int).Set(P.X)
 	R1.Y = new(big.Int).Set(P.Y)
 
-	for i := ec.n.BitLen() - 1; i >= 0; i-- {
+	for i := ec.N.BitLen() - 1; i >= 0; i-- {
 		if k.Bit(i) == 0 {
 			R1 = ec.point_add(R0, R1)
 			R0 = ec.point_add(R0, R0)
@@ -242,19 +242,19 @@ func Bitcoin_GenerateKeypair() (prikey BitcoinPrivateKey, pubkey BitcoinPublicKe
 
 	/* secp256k1 elliptic curve parameters */
 	var curve = &EllipticCurve{}
-	curve.p, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
-	curve.a, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
-	curve.b, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
+	curve.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
+	curve.A, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
+	curve.B, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
 	curve.G.X, _ = new(big.Int).SetString("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16)
 	curve.G.Y, _ = new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
-	curve.n, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
-	curve.h, _ = new(big.Int).SetString("01", 16)
+	curve.N, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
+	curve.H, _ = new(big.Int).SetString("01", 16)
 
 	/* See SEC1 pg.23 http://www.secg.org/collateral/sec1_final.pdf */
 
 	/* Select private key d randomly from [1, n) */
 	/* Random integer uniformly selected from [0, n-1) range */
-	d, err := rand.Int(rand.Reader, new(big.Int).Sub(curve.n, big.NewInt(1)))
+	d, err := rand.Int(rand.Reader, new(big.Int).Sub(curve.N, big.NewInt(1)))
 	if err != nil {
 		return prikey, pubkey, fmt.Errorf("Error: generating random private key.")
 	}
