@@ -1,12 +1,12 @@
-gobtcaddr
-=========
+gobtcaddr v1.0
+==============
 
-gobtcaddr is a standalone Bitcoin address generator written in Go.  It is
-intended to be a lightweight tool to generate one-time-use Bitcoin addresses.
-gobtcaddr generates an ECDSA secp256k1 keypair, writes the private key in
-Wallet Import Format to a text file in the directory specified by the first
-argument, and writes the corresponding public key in Bitcoin Address format to
-standard output.
+gobtcaddr is a standalone Bitcoin address generator written in Go. gobtcaddr
+generates an ECDSA secp256k1 keypair, prints the public key in Bitcoin Address
+format, and prints the private key in Wallet Import Format.
+
+gobtcaddr includes a lightweight package "btcaddr" to easily generate keypairs,
+and convert them to Bitcoin Address format and Wallet Import Format.
 
 gobtcaddr is MIT licensed. See the provided LICENSE file.
 
@@ -18,34 +18,15 @@ email at vsergeev at gmail.
 Example
 -------
 
-    $ ./gobtcaddr keys/
-    1LVFsHMZ98WfHsGZqkcYEvkbomiHFAXEre
-    $ ls keys/
-    2013-05-08_1367987627405535424_26643.txt
-    $ more keys/2013-05-08_1367987627405535424_26643.txt
-    5J1d4qtVDX34k6CLcVdi3s8BNRZybFqQb34BtqHNwjxmS1JWb5n
-    $
-
-Full Usage
-----------
-
     $ ./gobtcaddr
-    Usage: ./gobtcaddr <private key directory path> [label]
-    
-    Private Key Filename Format
-    
-        YYYY-MM-DD_<Unix Timestamp>_<PID>_<optional label>.txt
-    
-    Version 1.0 - https://github.com/vsergeev/gobtcaddr
+    Address: 1LD4UXR9bhWCdbpDQiExv88D53275fSH1R
+        WIF: 5JEbJAuksPuB9BVgMfQxiULYzAtps6un6E2tPqxVKXidiQp11Y1
     $
 
 Building
 --------
 
-    $ git clone git://github.com/vsergeev/gobtcaddr.git
-    $ cd gobtcaddr
-    $ go get code.google.com/p/go.crypto/ripemd160
-    $ go build
+    $ go install github.com/vsergeev/gobtcaddr
 
 Important Note
 --------------
