@@ -1,14 +1,14 @@
-gimme-bitcoin-address
-=====================
+gobtcaddr
+=========
 
-gimme-bitcoin-address is a standalone Bitcoin address generator written in Go.
-It is intended to be a lightweight tool to generate one-time-use Bitcoin
-addresses.  gimme-bitcoin-address generates an ECDSA secp256k1 keypair, writes
-the private key in Wallet Import Format to a text file in the directory
-specified by the first argument, and writes the corresponding public key in
-Bitcoin Address format to standard output.
+gobtcaddr is a standalone Bitcoin address generator written in Go.  It is
+intended to be a lightweight tool to generate one-time-use Bitcoin addresses.
+gobtcaddr generates an ECDSA secp256k1 keypair, writes the private key in
+Wallet Import Format to a text file in the directory specified by the first
+argument, and writes the corresponding public key in Bitcoin Address format to
+standard output.
 
-gimme-bitcoin-address is MIT licensed. See the provided LICENSE file.
+gobtcaddr is MIT licensed. See the provided LICENSE file.
 
 Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :)
 
@@ -18,7 +18,7 @@ email at vsergeev at gmail.
 Example
 -------
 
-    $ ./gimme-bitcoin-address keys/
+    $ ./gobtcaddr keys/
     1LVFsHMZ98WfHsGZqkcYEvkbomiHFAXEre
     $ ls keys/
     2013-05-08_1367987627405535424_26643.txt
@@ -29,21 +29,21 @@ Example
 Full Usage
 ----------
 
-    $ ./gimme-bitcoin-address
-    Usage: ./gimme-bitcoin-address <private key directory path> [label]
+    $ ./gobtcaddr
+    Usage: ./gobtcaddr <private key directory path> [label]
     
     Private Key Filename Format
     
         YYYY-MM-DD_<Unix Timestamp>_<PID>_<optional label>.txt
     
-    Version 1.0 - https://github.com/vsergeev/gimme-bitcoin-address
+    Version 1.0 - https://github.com/vsergeev/gobtcaddr
     $
 
 Building
 --------
 
-    $ git clone git://github.com/vsergeev/gimme-bitcoin-address.git
-    $ cd gimme-bitcoin-address
+    $ git clone git://github.com/vsergeev/gobtcaddr.git
+    $ cd gobtcaddr
     $ go get code.google.com/p/go.crypto/ripemd160
     $ go build
 
