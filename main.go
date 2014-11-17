@@ -1,6 +1,6 @@
 /* gobtcaddr v1.0
  * vsergeev
- * https://github.com/vsergeev/gimme-bitcoin-address
+ * https://github.com/vsergeev/gobtcaddr
  * MIT Licensed
  */
 

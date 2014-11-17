@@ -1,6 +1,6 @@
 /* gobtcaddr v1.0
  * vsergeev
- * https://github.com/vsergeev/gimme-bitcoin-address
+ * https://github.com/vsergeev/gobtcaddr
  * MIT Licensed
  */
 
@@ -16,14 +16,14 @@ import (
 
 /* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
 
-// Point represents a point on an EllipticCurve
+// Point represents a point on an EllipticCurve.
 type Point struct {
 	X *big.Int
 	Y *big.Int
 }
 
 /* y**2 = x**3 + a*x + b */
-// EllipticCurve represents the parameters of an elliptic curve
+// EllipticCurve represents the parameters of an elliptic curve.
 type EllipticCurve struct {
 	A *big.Int
 	B *big.Int
@@ -33,7 +33,7 @@ type EllipticCurve struct {
 	H *big.Int
 }
 
-// dump dumps the bytes of a point for debugging
+// dump dumps the bytes of a point for debugging.
 func (p *Point) dump() {
 	fmt.Printf("X: ")
 	for _, v := range p.X.Bytes() {
