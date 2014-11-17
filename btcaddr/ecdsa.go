@@ -60,7 +60,7 @@ func (p *Point) dump() {
  * higher level point arithmetic functions look absolutely hideous. I may still
  * change this in the future. */
 
-// elemAdd computes z = (x + y) % p
+// elemAdd computes z = (x + y) % p.
 func (ec *EllipticCurve) elemAdd(x *big.Int, y *big.Int) (z *big.Int) {
 	z = new(big.Int)
 	z.Add(x, y)
@@ -68,7 +68,7 @@ func (ec *EllipticCurve) elemAdd(x *big.Int, y *big.Int) (z *big.Int) {
 	return z
 }
 
-// elemSub computes z = (x - y) % p
+// elemSub computes z = (x - y) % p.
 func (ec *EllipticCurve) elemSub(x *big.Int, y *big.Int) (z *big.Int) {
 	z = new(big.Int)
 
@@ -85,7 +85,7 @@ func (ec *EllipticCurve) elemSub(x *big.Int, y *big.Int) (z *big.Int) {
 	return z
 }
 
-// elemMul computes z = (x * y) % p
+// elemMul computes z = (x * y) % p.
 func (ec *EllipticCurve) elemMul(x *big.Int, y *big.Int) (z *big.Int) {
 	n := new(big.Int).Set(x)
 	z = big.NewInt(0)
@@ -102,8 +102,8 @@ func (ec *EllipticCurve) elemMul(x *big.Int, y *big.Int) (z *big.Int) {
 
 /*** Point Arithmetic on Curve ***/
 
-// isOnCurve checks if point P is on EllipticCurve ec */
-func (ec *EllipticCurve) isOnCurve(P Point) bool {
+// IsOnCurve checks if point P is on EllipticCurve ec.
+func (ec *EllipticCurve) IsOnCurve(P Point) bool {
 	/* y**2 = x**3 + a*x + b */
 	lhs := ec.elemMul(P.Y, P.Y)
 	rhs := ec.elemAdd(
@@ -121,8 +121,8 @@ func (ec *EllipticCurve) isOnCurve(P Point) bool {
 	return false
 }
 
-// pointAdd computes R = P + Q
-func (ec *EllipticCurve) pointAdd(P Point, Q Point) (R Point) {
+// PointAdd computes R = P + Q on EllipticCurve ec.
+func (ec *EllipticCurve) PointAdd(P Point, Q Point) (R Point) {
 	/* See SEC1 pg.7 http://www.secg.org/collateral/sec1_final.pdf */
 
 	/* Identity */
@@ -186,8 +186,8 @@ func (ec *EllipticCurve) pointAdd(P Point, Q Point) (R Point) {
 	return R
 }
 
-// pointScalarMultiply computes Q = k * P
-func (ec *EllipticCurve) pointScalarMultiply(k *big.Int, P Point) (Q Point) {
+// PointScalarMultiply computes Q = k * P on EllipticCurve ec.
+func (ec *EllipticCurve) PointScalarMultiply(k *big.Int, P Point) (Q Point) {
 	/* Montgomery Ladder Point Multiplication for constant time operation.
 	 *
 	 * Implementation based on pseudocode here:
@@ -203,11 +203,11 @@ func (ec *EllipticCurve) pointScalarMultiply(k *big.Int, P Point) (Q Point) {
 
 	for i := ec.N.BitLen() - 1; i >= 0; i-- {
 		if k.Bit(i) == 0 {
-			R1 = ec.pointAdd(R0, R1)
-			R0 = ec.pointAdd(R0, R0)
+			R1 = ec.PointAdd(R0, R1)
+			R0 = ec.PointAdd(R0, R0)
 		} else {
-			R0 = ec.pointAdd(R0, R1)
-			R1 = ec.pointAdd(R1, R1)
+			R0 = ec.PointAdd(R0, R1)
+			R1 = ec.PointAdd(R1, R1)
 		}
 	}
 
