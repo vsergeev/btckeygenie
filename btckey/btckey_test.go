@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 
-package btcaddr
+package btckey
 
 import (
 	"math/big"

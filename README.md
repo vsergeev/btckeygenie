@@ -5,7 +5,7 @@ gobtcaddr is a standalone Bitcoin address generator written in Go. gobtcaddr
 generates an ECDSA secp256k1 keypair, prints the public key in Bitcoin Address
 format, and prints the private key in Wallet Import Format.
 
-gobtcaddr includes a lightweight package "btcaddr" to easily generate keypairs,
+gobtcaddr includes a lightweight package "btckey" to easily generate keypairs,
 and convert them to Bitcoin Address format and Wallet Import Format.
 
 gobtcaddr is MIT licensed. See the provided LICENSE file.

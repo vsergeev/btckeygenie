@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"github.com/vsergeev/gobtcaddr/btcaddr"
+	"github.com/vsergeev/gobtcaddr/btckey"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 	log.SetOutput(os.Stderr)
 
 	/* Generate a new ECDSA keypair */
-	priv, err := btcaddr.GenerateKey()
+	priv, err := btckey.GenerateKey()
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
