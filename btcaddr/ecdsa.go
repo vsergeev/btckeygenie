@@ -11,19 +11,19 @@ import (
 	"math/big"
 )
 
-/******************************************************************************/
-/* Elliptic Curve Business */
-/******************************************************************************/
-
 /* We gotta do a lot ourselves because golang's crypto/elliptic uses curves
  * with a = -3 hardcoded */
 
+/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
+
+// Point represents a point on an EllipticCurve
 type Point struct {
 	X *big.Int
 	Y *big.Int
 }
 
 /* y**2 = x**3 + a*x + b */
+// EllipticCurve represents the parameters of an elliptic curve
 type EllipticCurve struct {
 	A *big.Int
 	B *big.Int
@@ -33,7 +33,7 @@ type EllipticCurve struct {
 	H *big.Int
 }
 
-/* Dump a Point for debugging */
+// dump dumps the bytes of a point for debugging
 func (p *Point) dump() {
 	fmt.Printf("X: ")
 	for _, v := range p.X.Bytes() {
@@ -60,16 +60,16 @@ func (p *Point) dump() {
  * higher level point arithmetic functions look absolutely hideous. I may still
  * change this in the future. */
 
-/* z = (x + y) % p */
-func (ec *EllipticCurve) elem_add(x *big.Int, y *big.Int) (z *big.Int) {
+// elemAdd computes z = (x + y) % p
+func (ec *EllipticCurve) elemAdd(x *big.Int, y *big.Int) (z *big.Int) {
 	z = new(big.Int)
 	z.Add(x, y)
 	z.Mod(z, ec.P)
 	return z
 }
 
-/* z = (x - y) % p */
-func (ec *EllipticCurve) elem_sub(x *big.Int, y *big.Int) (z *big.Int) {
+// elemSub computes z = (x - y) % p
+func (ec *EllipticCurve) elemSub(x *big.Int, y *big.Int) (z *big.Int) {
 	z = new(big.Int)
 
 	/* x > y */
@@ -85,16 +85,16 @@ func (ec *EllipticCurve) elem_sub(x *big.Int, y *big.Int) (z *big.Int) {
 	return z
 }
 
-/* z = (x * y) % p */
-func (ec *EllipticCurve) elem_mul(x *big.Int, y *big.Int) (z *big.Int) {
+// elemMul computes z = (x * y) % p
+func (ec *EllipticCurve) elemMul(x *big.Int, y *big.Int) (z *big.Int) {
 	n := new(big.Int).Set(x)
 	z = big.NewInt(0)
 
 	for i := 0; i < y.BitLen(); i++ {
 		if y.Bit(i) == 1 {
-			z = ec.elem_add(z, n)
+			z = ec.elemAdd(z, n)
 		}
-		n = ec.elem_add(n, n)
+		n = ec.elemAdd(n, n)
 	}
 
 	return z
@@ -102,16 +102,16 @@ func (ec *EllipticCurve) elem_mul(x *big.Int, y *big.Int) (z *big.Int) {
 
 /*** Point Arithmetic on Curve ***/
 
-/* P on Curve? */
+// isOnCurve checks if point P is on EllipticCurve ec */
 func (ec *EllipticCurve) isOnCurve(P Point) bool {
 	/* y**2 = x**3 + a*x + b */
-	lhs := ec.elem_mul(P.Y, P.Y)
-	rhs := ec.elem_add(
-		ec.elem_add(
-			ec.elem_mul(
-				ec.elem_mul(P.X, P.X),
+	lhs := ec.elemMul(P.Y, P.Y)
+	rhs := ec.elemAdd(
+		ec.elemAdd(
+			ec.elemMul(
+				ec.elemMul(P.X, P.X),
 				P.X),
-			ec.elem_mul(ec.A, P.X)),
+			ec.elemMul(ec.A, P.X)),
 		ec.B)
 
 	if lhs.Cmp(rhs) == 0 {
@@ -121,8 +121,8 @@ func (ec *EllipticCurve) isOnCurve(P Point) bool {
 	return false
 }
 
-/* R = P + Q */
-func (ec *EllipticCurve) point_add(P Point, Q Point) (R Point) {
+// pointAdd computes R = P + Q
+func (ec *EllipticCurve) pointAdd(P Point, Q Point) (R Point) {
 	/* See SEC1 pg.7 http://www.secg.org/collateral/sec1_final.pdf */
 
 	/* Identity */
@@ -142,22 +142,22 @@ func (ec *EllipticCurve) point_add(P Point, Q Point) (R Point) {
 	} else if P.X.Cmp(Q.X) == 0 && P.Y.Cmp(Q.Y) == 0 {
 		/* Lambda = (3*P.X*P.X + a) / (2*P.Y) */
 
-		num := ec.elem_add(
-			ec.elem_mul(big.NewInt(3),
-				ec.elem_mul(P.X, P.X)),
+		num := ec.elemAdd(
+			ec.elemMul(big.NewInt(3),
+				ec.elemMul(P.X, P.X)),
 			ec.A)
-		den := ec.elem_mul(big.NewInt(2), P.Y)
+		den := ec.elemMul(big.NewInt(2), P.Y)
 		den.ModInverse(den, ec.P)
 
-		lambda := ec.elem_mul(num, den)
+		lambda := ec.elemMul(num, den)
 
 		/* R.X = lambda*lambda - 2*P.X */
-		R.X = ec.elem_sub(
-			ec.elem_mul(lambda, lambda),
-			ec.elem_mul(big.NewInt(2), P.X))
+		R.X = ec.elemSub(
+			ec.elemMul(lambda, lambda),
+			ec.elemMul(big.NewInt(2), P.X))
 		/* R.Y = lambda*(P.X - R.X) - P.Y */
-		R.Y = ec.elem_sub(
-			ec.elem_mul(lambda, ec.elem_sub(P.X, R.X)),
+		R.Y = ec.elemSub(
+			ec.elemMul(lambda, ec.elemSub(P.X, R.X)),
 			P.Y)
 
 		/* Point addition */
@@ -165,29 +165,29 @@ func (ec *EllipticCurve) point_add(P Point, Q Point) (R Point) {
 	} else {
 		/* Lambda = (Q.Y - P.Y) / (Q.X - P.X) */
 
-		num := ec.elem_sub(Q.Y, P.Y)
-		den := ec.elem_sub(Q.X, P.X)
+		num := ec.elemSub(Q.Y, P.Y)
+		den := ec.elemSub(Q.X, P.X)
 		den.ModInverse(den, ec.P)
 
-		lambda := ec.elem_mul(num, den)
+		lambda := ec.elemMul(num, den)
 
 		/* R.X = lambda*lambda - P.X - Q.X */
-		R.X = ec.elem_sub(
-			ec.elem_sub(
-				ec.elem_mul(lambda, lambda),
+		R.X = ec.elemSub(
+			ec.elemSub(
+				ec.elemMul(lambda, lambda),
 				P.X),
 			Q.X)
 		/* R.Y = lambda*(P.X - R.X) - P.Y */
-		R.Y = ec.elem_sub(
-			ec.elem_mul(lambda,
-				ec.elem_sub(P.X, R.X)),
+		R.Y = ec.elemSub(
+			ec.elemMul(lambda,
+				ec.elemSub(P.X, R.X)),
 			P.Y)
 	}
 	return R
 }
 
-/* Q = k * P */
-func (ec *EllipticCurve) point_scalar_multiply(k *big.Int, P Point) (Q Point) {
+// pointScalarMultiply computes Q = k * P
+func (ec *EllipticCurve) pointScalarMultiply(k *big.Int, P Point) (Q Point) {
 	/* Montgomery Ladder Point Multiplication for constant time operation.
 	 *
 	 * Implementation based on pseudocode here:
@@ -203,11 +203,11 @@ func (ec *EllipticCurve) point_scalar_multiply(k *big.Int, P Point) (Q Point) {
 
 	for i := ec.N.BitLen() - 1; i >= 0; i-- {
 		if k.Bit(i) == 0 {
-			R1 = ec.point_add(R0, R1)
-			R0 = ec.point_add(R0, R0)
+			R1 = ec.pointAdd(R0, R1)
+			R0 = ec.pointAdd(R0, R0)
 		} else {
-			R0 = ec.point_add(R0, R1)
-			R1 = ec.point_add(R1, R1)
+			R0 = ec.pointAdd(R0, R1)
+			R1 = ec.pointAdd(R1, R1)
 		}
 	}
 

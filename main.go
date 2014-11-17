@@ -24,10 +24,10 @@ func main() {
 	}
 
 	/* Convert the public key to a bitcoin network address */
-    address := btcaddr.PubkeyToAddress(pubkey, 0x00)
+    address := pubkey.ToAddress(0x00)
 
 	/* Convert the private key to a WIF string */
-    wif := btcaddr.PrikeyToWIF(prikey)
+    wif := prikey.ToWIF()
 
 	fmt.Println("Address:", address)
 	fmt.Println("    WIF:", wif)

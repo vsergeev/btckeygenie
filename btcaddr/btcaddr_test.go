@@ -26,14 +26,14 @@ func TestConvert(t *testing.T) {
 	pubkey.Y = new(big.Int).SetBytes(Y)
 
 	/* Ensure private key to wallet import format export matches test vector */
-	if wifstr := PrikeyToWIF(prikey); wifstr != "5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V" {
+	if wifstr := prikey.ToWIF(); wifstr != "5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V" {
 		t.Error("failure convert private key to wif string failed")
 	} else {
 		t.Log("success convert private key to wif string")
 	}
 
 	/* Ensure public key to bitcoin address export matches test vector */
-	if address := PubkeyToAddress(pubkey, 0x00); address != "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM" {
+	if address := pubkey.ToAddress(0x00); address != "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM" {
 		t.Error("failure convert public key to bitcoin address failed")
 	} else {
 		t.Log("success convert public key to bitcoin address")

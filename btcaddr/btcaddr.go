@@ -7,13 +7,10 @@
 package btcaddr
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
 	"fmt"
 	"math/big"
-	"os"
-	"time"
-
+	"crypto/rand"
+	"crypto/sha256"
 	"code.google.com/p/go.crypto/ripemd160"
 )
 
@@ -25,14 +22,17 @@ import (
  * tries to use this code with crypto/ecdsa, which doesn't support the
  * secp256k1 elliptic curve that bitcoin uses */
 
+// BitcoinPrivateKey represents a private key
 type BitcoinPrivateKey struct {
 	D *big.Int
 }
 
+// BitcoinPublicKey represents a private key
 type BitcoinPublicKey struct {
 	X, Y *big.Int
 }
 
+// GenerateKeyPair generates a private and public key pair
 func GenerateKeyPair() (prikey BitcoinPrivateKey, pubkey BitcoinPublicKey, err error) {
 	/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
 
@@ -58,11 +58,11 @@ func GenerateKeyPair() (prikey BitcoinPrivateKey, pubkey BitcoinPublicKey, err e
 	d.Add(d, big.NewInt(1))
 
 	/* Derive public key from Q = d*G */
-	Q := curve.point_scalar_multiply(d, curve.G)
+	Q := curve.pointScalarMultiply(d, curve.G)
 
 	/* Check that Q is on the curve */
 	if !curve.isOnCurve(Q) {
-		return prikey, pubkey, fmt.Errorf("Error: catastrophic math failure.")
+		return prikey, pubkey, fmt.Errorf("Error: catastrophic math logic failure.")
 	}
 
 	prikey.D = d
@@ -76,6 +76,7 @@ func GenerateKeyPair() (prikey BitcoinPrivateKey, pubkey BitcoinPublicKey, err e
 /* Bitcoin Public and Private Key Export Mechanics */
 /******************************************************************************/
 
+// Base58 computes the base-58 encoding of a bytes sequence b.
 func Base58(b []byte) (s string) {
 	/* See https://en.bitcoin.it/wiki/Base58Check_encoding */
 
@@ -107,7 +108,8 @@ func Base58(b []byte) (s string) {
 	return s
 }
 
-func PrikeyToWIF(prikey BitcoinPrivateKey) (wifstr string) {
+// ToWIF converts a Bitcoin private key to a Wallet Import Format string.
+func (prikey *BitcoinPrivateKey) ToWIF() (wif string) {
 	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
 
 	/* Create a new SHA256 context */
@@ -136,12 +138,13 @@ func PrikeyToWIF(prikey BitcoinPrivateKey) (wifstr string) {
 	wif_bytes = append(wif_bytes, checksum...)
 
 	/* 6. Base58 the byte sequence */
-	wifstr = Base58(wif_bytes)
+	wif = Base58(wif_bytes)
 
-	return wifstr
+	return wif
 }
 
-func PubkeyToAddress(pubkey BitcoinPublicKey, version uint8) (address string) {
+// ToAddress converts a Bitcoin public key to a Bitcoin address string.
+func (pubkey *BitcoinPublicKey) ToAddress(version uint8) (address string) {
 	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */
 
 	/* Create a new SHA256 context */
@@ -190,65 +193,3 @@ func PubkeyToAddress(pubkey BitcoinPublicKey, version uint8) (address string) {
 
 	return address
 }
-
-/******************************************************************************/
-/* Writing Bitcoin Private Key to File */
-/******************************************************************************/
-
-func Write_Prikey(prikey BitcoinPrivateKey, dir string, label string) (err error) {
-	var filename string
-
-	/* Check that the private key directory is a directory and exists */
-	fi, err := os.Stat(dir)
-	if dir == "" || (err == nil && !fi.IsDir()) {
-		return fmt.Errorf("Error: private key directory path not a directory.")
-	} else if err != nil && os.IsNotExist(err) {
-		return fmt.Errorf("Error: private key directory path does not exist.")
-	} else if err != nil {
-		return fmt.Errorf("Error stat'ing private key directory path: %s", err)
-	}
-
-	/* Add a path separator to the end of our directory string */
-	if dir[len(dir)-1] != os.PathSeparator {
-		dir += string(os.PathSeparator)
-	}
-
-	/* Prefix the label with a _ to make the filename pretty */
-	if label != "" {
-		label = "_" + label
-	}
-
-	/* Keep trying until we find an unused filename */
-	for {
-		time_now := time.Now()
-		/* Filename format is YYYY-MM-DD_UnixTimestamp_PID_Label.txt */
-		filename = fmt.Sprintf("%04d-%02d-%02d_%d_%d%s.txt", time_now.Year(), time_now.Month(), time_now.Day(), time_now.UnixNano(), os.Getpid(), label)
-
-		_, err := os.Stat(dir + filename)
-		/* If we had a weird stat'ing error (permissions?) */
-		if err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("Error: stat'ing new private key file: %s", err)
-			/* Break if we found a non-existent filename */
-		} else if err != nil && os.IsNotExist(err) {
-			break
-		}
-	}
-
-	/* Create the private key file */
-	keyfile, err := os.Create(dir + filename)
-	if err != nil {
-		return fmt.Errorf("Error opening private key file for writing: %s", err)
-	}
-	defer keyfile.Close()
-
-	/* Write the WIF encoded private key */
-	_, err = keyfile.WriteString(PrikeyToWIF(prikey))
-	if err != nil {
-		return fmt.Errorf("Error writing to private key file: %s", err)
-	}
-
-	return nil
-}
-
-/******************************************************************************/
-/******************************************************************************/
