@@ -8,9 +8,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/vsergeev/gobtcaddr/btckey"
 	"log"
 	"os"
-	"github.com/vsergeev/gobtcaddr/btckey"
 )
 
 func main() {
@@ -24,10 +24,10 @@ func main() {
 	}
 
 	/* Convert the public key to a bitcoin network address */
-    address := priv.ToAddress(0x00)
+	address := priv.ToAddress(0x00)
 
 	/* Convert the private key to a WIF string */
-    wif := priv.ToWIF()
+	wif := priv.ToWIF()
 
 	fmt.Println("Address:", address)
 	fmt.Println("    WIF:", wif)

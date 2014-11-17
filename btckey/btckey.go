@@ -7,11 +7,11 @@
 package btckey
 
 import (
-	"fmt"
-	"math/big"
+	"code.google.com/p/go.crypto/ripemd160"
 	"crypto/rand"
 	"crypto/sha256"
-	"code.google.com/p/go.crypto/ripemd160"
+	"fmt"
+	"math/big"
 )
 
 /******************************************************************************/
