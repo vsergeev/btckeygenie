@@ -18,16 +18,16 @@ func main() {
 	log.SetOutput(os.Stderr)
 
 	/* Generate a new ECDSA keypair */
-	prikey, pubkey, err := btcaddr.GenerateKeyPair()
+	priv, err := btcaddr.GenerateKey()
 	if err != nil {
 		log.Fatalf("%s\n", err)
 	}
 
 	/* Convert the public key to a bitcoin network address */
-    address := pubkey.ToAddress(0x00)
+    address := priv.ToAddress(0x00)
 
 	/* Convert the private key to a WIF string */
-    wif := prikey.ToWIF()
+    wif := priv.ToWIF()
 
 	fmt.Println("Address:", address)
 	fmt.Println("    WIF:", wif)

@@ -18,22 +18,21 @@ func TestConvert(t *testing.T) {
 	X := []byte{0x50, 0x86, 0x3A, 0xD6, 0x4A, 0x87, 0xAE, 0x8A, 0x2F, 0xE8, 0x3C, 0x1A, 0xF1, 0xA8, 0x40, 0x3C, 0xB5, 0x3F, 0x53, 0xE4, 0x86, 0xD8, 0x51, 0x1D, 0xAD, 0x8A, 0x04, 0x88, 0x7E, 0x5B, 0x23, 0x52}
 	Y := []byte{0x2C, 0xD4, 0x70, 0x24, 0x34, 0x53, 0xA2, 0x99, 0xFA, 0x9E, 0x77, 0x23, 0x77, 0x16, 0x10, 0x3A, 0xBC, 0x11, 0xA1, 0xDF, 0x38, 0x85, 0x5E, 0xD6, 0xF2, 0xEE, 0x18, 0x7E, 0x9C, 0x58, 0x2B, 0xA6}
 
-	var prikey BitcoinPrivateKey
-	var pubkey BitcoinPublicKey
+	var priv PrivateKey
 
-	prikey.D = new(big.Int).SetBytes(D)
-	pubkey.X = new(big.Int).SetBytes(X)
-	pubkey.Y = new(big.Int).SetBytes(Y)
+	priv.D = new(big.Int).SetBytes(D)
+	priv.X = new(big.Int).SetBytes(X)
+	priv.Y = new(big.Int).SetBytes(Y)
 
 	/* Ensure private key to wallet import format export matches test vector */
-	if wifstr := prikey.ToWIF(); wifstr != "5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V" {
+	if wifstr := priv.ToWIF(); wifstr != "5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V" {
 		t.Error("failure convert private key to wif string failed")
 	} else {
 		t.Log("success convert private key to wif string")
 	}
 
 	/* Ensure public key to bitcoin address export matches test vector */
-	if address := pubkey.ToAddress(0x00); address != "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM" {
+	if address := priv.ToAddress(0x00); address != "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM" {
 		t.Error("failure convert public key to bitcoin address failed")
 	} else {
 		t.Log("success convert public key to bitcoin address")
