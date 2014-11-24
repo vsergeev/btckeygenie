@@ -260,7 +260,12 @@ func CheckWIF(wif string) (valid bool, err error) {
 
 // ToBytes converts a Bitcoin private key to a bytes slice.
 func (priv *PrivateKey) ToBytes() (b []byte) {
-	return priv.D.Bytes()
+	d := priv.D.Bytes()
+
+	/* Pad D to 32 bytes */
+	padded_d := append(bytes.Repeat([]byte{0x00}, 32-len(d)), d...)
+
+	return padded_d
 }
 
 // FromBytes converts a byte slice to a Bitcoin private key and derives the corresponding Bitcoin public key.
@@ -271,11 +276,11 @@ func (priv *PrivateKey) FromBytes(b []byte) (err error) {
 
 	priv.D = new(big.Int).SetBytes(b)
 
-    /* Derive public key from private key */
-    _, err = priv.derive()
-    if err != nil {
-        return err
-    }
+	/* Derive public key from private key */
+	_, err = priv.derive()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -314,11 +319,11 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 		return err
 	}
 
-    /* Derive public key from private key */
-    _, err = priv.derive()
-    if err != nil {
-        return err
-    }
+	/* Derive public key from private key */
+	_, err = priv.derive()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -329,7 +334,15 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 
 // ToBytes converts a Bitcoin public key to a bytes slice.
 func (pub *PublicKey) ToBytes() (b []byte) {
-	return append([]byte{0x04}, append(pub.X.Bytes(), pub.Y.Bytes()...)...)
+	x := pub.X.Bytes()
+	y := pub.Y.Bytes()
+
+	/* Pad X and Y coordinate bytes to 32-bytes */
+	padded_x := append(bytes.Repeat([]byte{0x00}, 32-len(x)), x...)
+	padded_y := append(bytes.Repeat([]byte{0x00}, 32-len(y)), y...)
+
+	/* Add prefix 0x04 for uncompressed coordinates */
+	return append([]byte{0x04}, append(padded_x, padded_y...)...)
 }
 
 // FromBytes converts a byte slice to a Bitcoin public key.
@@ -338,9 +351,9 @@ func (pub *PublicKey) FromBytes(b []byte) (err error) {
 		return fmt.Errorf("Invalid public key bytes length %d, expected 64.", len(b))
 	}
 
-    if b[0] != 0x04 {
-        return fmt.Errorf("Invalid public key prefix byte 0x%02x, expected 0x04.", b[0])
-    }
+	if b[0] != 0x04 {
+		return fmt.Errorf("Invalid public key prefix byte 0x%02x, expected 0x04.", b[0])
+	}
 
 	pub.X = new(big.Int).SetBytes(b[1:33])
 	pub.Y = new(big.Int).SetBytes(b[33:65])
@@ -352,8 +365,8 @@ func (pub *PublicKey) FromBytes(b []byte) (err error) {
 func (pub *PublicKey) ToAddress(version uint8) (address string) {
 	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */
 
-    /* Convert the public key to bytes */
-    pub_bytes := pub.ToBytes()
+	/* Convert the public key to bytes */
+	pub_bytes := pub.ToBytes()
 
 	/* SHA256 Hash */
 	sha256_h := sha256.New()
