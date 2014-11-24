@@ -225,6 +225,27 @@ func (priv *PrivateKey) ToWIF() (wif string) {
 	return wif
 }
 
+// CheckWIF checks that string wif is a valid Wallet Import File string.
+func CheckWIF(wif string) (valid bool, err error) {
+	/* Base58 Check Decode the WIF string */
+	ver, pri_bytes, err := b58checkdecode(wif)
+	if err != nil {
+		return false, err
+	}
+
+	/* Check that the version byte is 0x80 */
+	if ver != 0x80 {
+		return false, fmt.Errorf("Invalid version 0x%02x for WIF, expected 0x80.", ver)
+	}
+
+	/* Check that private key byte length is 32 */
+	if len(pri_bytes) != 32 {
+		return false, fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(pri_bytes))
+	}
+
+	return true, nil
+}
+
 // ToAddress converts a Bitcoin public key to a Bitcoin address string.
 func (pub *PublicKey) ToAddress(version uint8) (address string) {
 	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */

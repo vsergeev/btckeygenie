@@ -17,16 +17,16 @@ type b58Test struct {
 	encoded string
 }
 
-var b58Vectors = []b58Test{
-	{[]byte{0x4e, 0x19}, "6wi"},
-	{[]byte{0x3a, 0xb7}, "5UA"},
-	{[]byte{0xae, 0x0d, 0xdc, 0x9b}, "5T3W5p"},
-	{[]byte{0x65, 0xe0, 0xb4, 0xc9}, "3c3E6L"},
-	{[]byte{0x25, 0x79, 0x36, 0x86, 0xe9, 0xf2, 0x5b, 0x6b}, "7GYJp3ZThFG"},
-	{[]byte{0x94, 0xb9, 0xac, 0x08, 0x4a, 0x0d, 0x65, 0xf5}, "RspedB5CMo2"},
-}
-
 func TestBase58(t *testing.T) {
+	var b58Vectors = []b58Test{
+		{[]byte{0x4e, 0x19}, "6wi"},
+		{[]byte{0x3a, 0xb7}, "5UA"},
+		{[]byte{0xae, 0x0d, 0xdc, 0x9b}, "5T3W5p"},
+		{[]byte{0x65, 0xe0, 0xb4, 0xc9}, "3c3E6L"},
+		{[]byte{0x25, 0x79, 0x36, 0x86, 0xe9, 0xf2, 0x5b, 0x6b}, "7GYJp3ZThFG"},
+		{[]byte{0x94, 0xb9, 0xac, 0x08, 0x4a, 0x0d, 0x65, 0xf5}, "RspedB5CMo2"},
+	}
+
 	/* Test base-58 encoding */
 	for i := 0; i < len(b58Vectors); i++ {
 		got := b58encode(b58Vectors[i].bytes)
@@ -34,7 +34,7 @@ func TestBase58(t *testing.T) {
 			t.Fatalf("b58encode(%v): got %s, expected %s", b58Vectors[i].bytes, got, b58Vectors[i].encoded)
 		}
 	}
-	t.Log("success b58encode()")
+	t.Log("success b58encode() on valid vectors")
 
 	/* Test base-58 decoding */
 	for i := 0; i < len(b58Vectors); i++ {
@@ -46,7 +46,7 @@ func TestBase58(t *testing.T) {
 			t.Fatalf("b58decode(%s): got %v, expected %v", b58Vectors[i].encoded, got, b58Vectors[i].bytes)
 		}
 	}
-	t.Log("success b58decode()")
+	t.Log("success b58decode() on valid vectors")
 
 	/* Test base-58 decoding of invalid strings */
 	b58InvalidVectors := []string{"5T3IW5p", "6Owi"}
@@ -57,7 +57,7 @@ func TestBase58(t *testing.T) {
 		}
 		t.Logf("b58decode(%s): got expected err %v", b58InvalidVectors[i], err)
 	}
-	t.Log("success b58decode() handling of invalid strings")
+	t.Log("success b58decode() on invalid vectors")
 }
 
 type b58CheckTest struct {
@@ -66,12 +66,12 @@ type b58CheckTest struct {
 	encoded string
 }
 
-var b58CheckVectors = []b58CheckTest{
-	{0x00, []byte{0x01, 0x09, 0x66, 0x77, 0x60, 0x06, 0x95, 0x3D, 0x55, 0x67, 0x43, 0x9E, 0x5E, 0x39, 0xF8, 0x6A, 0x0D, 0x27, 0x3B, 0xEE}, "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"},
-	{0x80, []byte{0x0C, 0x28, 0xFC, 0xA3, 0x86, 0xC7, 0xA2, 0x27, 0x60, 0x0B, 0x2F, 0xE5, 0x0B, 0x7C, 0xAE, 0x11, 0xEC, 0x86, 0xD3, 0xBF, 0x1F, 0xBE, 0x47, 0x1B, 0xE8, 0x98, 0x27, 0xE1, 0x9D, 0x72, 0xAA, 0x1D}, "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"},
-}
-
 func TestBase58Check(t *testing.T) {
+	var b58CheckVectors = []b58CheckTest{
+		{0x00, []byte{0x01, 0x09, 0x66, 0x77, 0x60, 0x06, 0x95, 0x3D, 0x55, 0x67, 0x43, 0x9E, 0x5E, 0x39, 0xF8, 0x6A, 0x0D, 0x27, 0x3B, 0xEE}, "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"},
+		{0x80, []byte{0x0C, 0x28, 0xFC, 0xA3, 0x86, 0xC7, 0xA2, 0x27, 0x60, 0x0B, 0x2F, 0xE5, 0x0B, 0x7C, 0xAE, 0x11, 0xEC, 0x86, 0xD3, 0xBF, 0x1F, 0xBE, 0x47, 0x1B, 0xE8, 0x98, 0x27, 0xE1, 0x9D, 0x72, 0xAA, 0x1D}, "5HueCGU8rMjxEXxiPuD5BDku4MkFqeZyd4dZ1jvhTVqvbTLvyTJ"},
+	}
+
 	/* Test base-58 check encoding */
 	for i := 0; i < len(b58CheckVectors); i++ {
 		got := b58checkencode(b58CheckVectors[i].ver, b58CheckVectors[i].bytes)
@@ -79,7 +79,7 @@ func TestBase58Check(t *testing.T) {
 			t.Fatalf("b58checkencode(0x%02x, %v): got %s, expected %s", b58CheckVectors[i].ver, b58CheckVectors[i].bytes, got, b58CheckVectors[i].encoded)
 		}
 	}
-	t.Log("success b58checkencode()")
+	t.Log("success b58checkencode() on valid vectors")
 
 	/* Test base-58 check decoding */
 	for i := 0; i < len(b58CheckVectors); i++ {
@@ -91,7 +91,7 @@ func TestBase58Check(t *testing.T) {
 			t.Fatalf("b58checkdecode(%s): got ver %v, bytes %v, expected ver %v, bytes %v", b58CheckVectors[i].encoded, ver, got, b58CheckVectors[i].ver, b58CheckVectors[i].bytes)
 		}
 	}
-	t.Log("success b58checkdecode()")
+	t.Log("success b58checkdecode() on valid vectors")
 
 	/* Test base-58 check decoding of invalid strings */
 	b58CheckInvalidVectors := []string{
@@ -106,7 +106,44 @@ func TestBase58Check(t *testing.T) {
 		}
 		t.Logf("b58checkdecode(%s): got expected err %v", b58CheckInvalidVectors[i], err)
 	}
-	t.Log("success b58checkdecode() handling of invalid strings")
+	t.Log("success b58checkdecode() on invalid vectors")
+}
+
+func TestCheckWIF(t *testing.T) {
+	var wifVectors = []string{
+		"5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V",
+		"5JbDYniwPgAn3YqPUkVvrCQdJsjjFx2rV2EYeg5CAH3wNncziMm",
+		"5KPaskZdrcPmrH3AFdpMF7FFBcYigwdrEfpBN9K5Ch4Ch6Bort4",
+	}
+
+	/* Check valid vectors */
+	for i := 0; i < len(wifVectors); i++ {
+		got, err := CheckWIF(wifVectors[i])
+		if got == false {
+			t.Fatalf("CheckWIF(%s): got false, error %v, expected true", wifVectors[i], err)
+		}
+	}
+	t.Log("success CheckWIF() on valid vectors")
+
+	var wifInvalidVectors = []string{
+		"5T3IW5p", // Invalid base58
+		"6wi",     // Missing checksum
+		"6Mcb23muAxyXaSMhmB6B1mqkvLdWhtuFZmnZsxDczHRraMcNG",  // Invalid checksum
+		"huzKTSifqNioknFPsoA7uc359rRHJQHRg42uiKn6P8Rnv5qxV5", // Invalid version byte
+		"yPoVP5njSzmEVK4VJGRWWAwqnwCyLPRcMm5XyrKgYUpeXtGyM",  // Invalid private key byte length
+	}
+
+	/* Check invalid vectors */
+	for i := 0; i < len(wifInvalidVectors); i++ {
+		got, err := CheckWIF(wifInvalidVectors[i])
+		if got == true {
+			t.Fatalf("CheckWIF(%s): got true, expected false", wifInvalidVectors[i])
+		}
+		t.Logf("CheckWIF(%s): got false, err %v", wifInvalidVectors[i], err)
+	}
+	t.Log("success CheckWIF() on invalid vectors")
+}
+
 }
 
 func TestExport(t *testing.T) {
