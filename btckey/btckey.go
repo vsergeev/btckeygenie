@@ -237,6 +237,43 @@ func b58checkdecode(s string) (ver uint8, b []byte, err error) {
 	return ver, b, nil
 }
 
+// CheckWIF checks that string wif is a valid Wallet Import File string.
+func CheckWIF(wif string) (valid bool, err error) {
+	/* Base58 Check Decode the WIF string */
+	ver, priv_bytes, err := b58checkdecode(wif)
+	if err != nil {
+		return false, err
+	}
+
+	/* Check that the version byte is 0x80 */
+	if ver != 0x80 {
+		return false, fmt.Errorf("Invalid version 0x%02x for WIF, expected 0x80.", ver)
+	}
+
+	/* Check that private key byte length is 32 */
+	if len(priv_bytes) != 32 {
+		return false, fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(priv_bytes))
+	}
+
+	return true, nil
+}
+
+// ToBytes converts a Bitcoin private key to a bytes slice.
+func (priv *PrivateKey) ToBytes() (b []byte) {
+	return priv.D.Bytes()
+}
+
+// FromBytes converts a byte slice to a Bitcoin private key.
+func (priv *PrivateKey) FromBytes(b []byte) (err error) {
+	if len(b) != 32 {
+		return fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(b))
+	}
+
+	priv.D = new(big.Int).SetBytes(b)
+
+	return nil
+}
+
 // ToWIF converts a Bitcoin private key to a Wallet Import Format string.
 func (priv *PrivateKey) ToWIF() (wif string) {
 	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
@@ -250,25 +287,21 @@ func (priv *PrivateKey) ToWIF() (wif string) {
 	return wif
 }
 
-// CheckWIF checks that string wif is a valid Wallet Import File string.
-func CheckWIF(wif string) (valid bool, err error) {
-	/* Base58 Check Decode the WIF string */
-	ver, pri_bytes, err := b58checkdecode(wif)
-	if err != nil {
-		return false, err
+// ToBytes converts a Bitcoin public key to a bytes slice.
+func (pub *PublicKey) ToBytes() (b []byte) {
+	return append(pub.X.Bytes(), pub.Y.Bytes()...)
+}
+
+// FromBytes converts a byte slice to a Bitcoin public key.
+func (pub *PublicKey) FromBytes(b []byte) (err error) {
+	if len(b) != 64 {
+		return fmt.Errorf("Invalid public key bytes length %d, expected 64.", len(b))
 	}
 
-	/* Check that the version byte is 0x80 */
-	if ver != 0x80 {
-		return false, fmt.Errorf("Invalid version 0x%02x for WIF, expected 0x80.", ver)
-	}
+	pub.X = new(big.Int).SetBytes(b[0:32])
+	pub.Y = new(big.Int).SetBytes(b[32:64])
 
-	/* Check that private key byte length is 32 */
-	if len(pri_bytes) != 32 {
-		return false, fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(pri_bytes))
-	}
-
-	return true, nil
+	return nil
 }
 
 // ToAddress converts a Bitcoin public key to a Bitcoin address string.
