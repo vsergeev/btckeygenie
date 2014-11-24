@@ -89,7 +89,7 @@ func GenerateKey() (priv PrivateKey, err error) {
 }
 
 /******************************************************************************/
-/* Bitcoin Public and Private Key Export Mechanics */
+/* Base-58 Encode/Decode */
 /******************************************************************************/
 
 // b58encode encodes a bytes slice b into a base-58 encoded string.
@@ -144,6 +144,10 @@ func b58decode(s string) (b []byte, err error) {
 
 	return b, nil
 }
+
+/******************************************************************************/
+/* Base-58 Check Encode/Decode */
+/******************************************************************************/
 
 // b58checkencode encodes version ver and bytes slice b into a base-58 check encoded string.
 func b58checkencode(ver uint8, b []byte) (s string) {
@@ -229,6 +233,10 @@ func b58checkdecode(s string) (ver uint8, b []byte, err error) {
 	return ver, b, nil
 }
 
+/******************************************************************************/
+/* Bitcoin Private Key Import/Export */
+/******************************************************************************/
+
 // CheckWIF checks that string wif is a valid Wallet Import File string.
 func CheckWIF(wif string) (valid bool, err error) {
 	/* Base58 Check Decode the WIF string */
@@ -242,7 +250,7 @@ func CheckWIF(wif string) (valid bool, err error) {
 		return false, fmt.Errorf("Invalid WIF version 0x%02x, expected 0x80.", ver)
 	}
 
-	/* Check that private key byte length is 32 */
+	/* Check that private key bytes length is 32 */
 	if len(priv_bytes) != 32 {
 		return false, fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(priv_bytes))
 	}
@@ -276,8 +284,8 @@ func (priv *PrivateKey) FromBytes(b []byte) (err error) {
 func (priv *PrivateKey) ToWIF() (wif string) {
 	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
 
-	/* Convert the private key to big endian bytes */
-	priv_bytes := priv.D.Bytes()
+	/* Convert the private key to bytes */
+	priv_bytes := priv.ToBytes()
 
 	/* Convert bytes to base-58 check encoded string with version 0x80 */
 	wif = b58checkencode(0x80, priv_bytes)
@@ -315,19 +323,27 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 	return nil
 }
 
+/******************************************************************************/
+/* Bitcoin Public Key Import/Export */
+/******************************************************************************/
+
 // ToBytes converts a Bitcoin public key to a bytes slice.
 func (pub *PublicKey) ToBytes() (b []byte) {
-	return append(pub.X.Bytes(), pub.Y.Bytes()...)
+	return append([]byte{0x04}, append(pub.X.Bytes(), pub.Y.Bytes()...)...)
 }
 
 // FromBytes converts a byte slice to a Bitcoin public key.
 func (pub *PublicKey) FromBytes(b []byte) (err error) {
-	if len(b) != 64 {
+	if len(b) != 65 {
 		return fmt.Errorf("Invalid public key bytes length %d, expected 64.", len(b))
 	}
 
-	pub.X = new(big.Int).SetBytes(b[0:32])
-	pub.Y = new(big.Int).SetBytes(b[32:64])
+    if b[0] != 0x04 {
+        return fmt.Errorf("Invalid public key prefix byte 0x%02x, expected 0x04.", b[0])
+    }
+
+	pub.X = new(big.Int).SetBytes(b[1:33])
+	pub.Y = new(big.Int).SetBytes(b[33:65])
 
 	return nil
 }
@@ -336,23 +352,17 @@ func (pub *PublicKey) FromBytes(b []byte) (err error) {
 func (pub *PublicKey) ToAddress(version uint8) (address string) {
 	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */
 
-	/* Create a new SHA256 context */
-	sha256_h := sha256.New()
-	/* Create a new RIPEMD160 Context */
-	ripemd160_h := ripemd160.New()
-
-	/* Convert the public key to a byte sequence */
-	pub_bytes := append(pub.X.Bytes(), pub.Y.Bytes()...)
-
-	/* Prepend 0x04 */
-	pub_bytes = append([]byte{0x04}, pub_bytes...)
+    /* Convert the public key to bytes */
+    pub_bytes := pub.ToBytes()
 
 	/* SHA256 Hash */
+	sha256_h := sha256.New()
 	sha256_h.Reset()
 	sha256_h.Write(pub_bytes)
 	pub_hash_1 := sha256_h.Sum(nil)
 
 	/* RIPEMD-160 Hash */
+	ripemd160_h := ripemd160.New()
 	ripemd160_h.Reset()
 	ripemd160_h.Write(pub_hash_1)
 	pub_hash_2 := ripemd160_h.Sum(nil)
