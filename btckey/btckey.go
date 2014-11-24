@@ -54,7 +54,7 @@ func (priv *PrivateKey) derive() (pub *PublicKey, err error) {
 
 	/* Check that Q is on the curve */
 	if !secp256k1.IsOnCurve(Q) {
-		return nil, fmt.Errorf("Catastrophic math logic failure.")
+		return nil, fmt.Errorf("Catastrophic math logic failure in public key derivation.")
 	}
 
 	priv.X = Q.X
@@ -239,7 +239,7 @@ func CheckWIF(wif string) (valid bool, err error) {
 
 	/* Check that the version byte is 0x80 */
 	if ver != 0x80 {
-		return false, fmt.Errorf("Invalid version 0x%02x for WIF, expected 0x80.", ver)
+		return false, fmt.Errorf("Invalid WIF version 0x%02x, expected 0x80.", ver)
 	}
 
 	/* Check that private key byte length is 32 */
@@ -255,13 +255,19 @@ func (priv *PrivateKey) ToBytes() (b []byte) {
 	return priv.D.Bytes()
 }
 
-// FromBytes converts a byte slice to a Bitcoin private key.
+// FromBytes converts a byte slice to a Bitcoin private key and derives the corresponding Bitcoin public key.
 func (priv *PrivateKey) FromBytes(b []byte) (err error) {
 	if len(b) != 32 {
 		return fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(b))
 	}
 
 	priv.D = new(big.Int).SetBytes(b)
+
+    /* Derive public key from private key */
+    _, err = priv.derive()
+    if err != nil {
+        return err
+    }
 
 	return nil
 }
@@ -277,6 +283,36 @@ func (priv *PrivateKey) ToWIF() (wif string) {
 	wif = b58checkencode(0x80, priv_bytes)
 
 	return wif
+}
+
+// FromWIF converts a Wallet Import Format string to a Bitcoin private key and derives the corresponding Bitcoin public key.
+func (priv *PrivateKey) FromWIF(wif string) (err error) {
+	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
+
+	/* Base58 Check Decode the WIF string */
+	ver, priv_bytes, err := b58checkdecode(wif)
+	if err != nil {
+		return err
+	}
+
+	/* Check that the version byte is 0x80 */
+	if ver != 0x80 {
+		return fmt.Errorf("Invalid WIF version 0x%02x, expected 0x80.", ver)
+	}
+
+	/* Convert from bytes to a private key */
+	err = priv.FromBytes(priv_bytes)
+	if err != nil {
+		return err
+	}
+
+    /* Derive public key from private key */
+    _, err = priv.derive()
+    if err != nil {
+        return err
+    }
+
+	return nil
 }
 
 // ToBytes converts a Bitcoin public key to a bytes slice.
