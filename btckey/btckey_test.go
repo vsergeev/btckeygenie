@@ -144,6 +144,34 @@ func TestCheckWIF(t *testing.T) {
 	t.Log("success CheckWIF() on invalid vectors")
 }
 
+func TestDerive(t *testing.T) {
+	/* Sample Private Key */
+	D := []byte{0x18, 0xE1, 0x4A, 0x7B, 0x6A, 0x30, 0x7F, 0x42, 0x6A, 0x94, 0xF8, 0x11, 0x47, 0x01, 0xE7, 0xC8, 0xE7, 0x74, 0xE7, 0xF9, 0xA4, 0x7E, 0x2C, 0x20, 0x35, 0xDB, 0x29, 0xA2, 0x06, 0x32, 0x17, 0x25}
+	/* Sample Public Key */
+	X := []byte{0x50, 0x86, 0x3A, 0xD6, 0x4A, 0x87, 0xAE, 0x8A, 0x2F, 0xE8, 0x3C, 0x1A, 0xF1, 0xA8, 0x40, 0x3C, 0xB5, 0x3F, 0x53, 0xE4, 0x86, 0xD8, 0x51, 0x1D, 0xAD, 0x8A, 0x04, 0x88, 0x7E, 0x5B, 0x23, 0x52}
+	Y := []byte{0x2C, 0xD4, 0x70, 0x24, 0x34, 0x53, 0xA2, 0x99, 0xFA, 0x9E, 0x77, 0x23, 0x77, 0x16, 0x10, 0x3A, 0xBC, 0x11, 0xA1, 0xDF, 0x38, 0x85, 0x5E, 0xD6, 0xF2, 0xEE, 0x18, 0x7E, 0x9C, 0x58, 0x2B, 0xA6}
+
+	var priv PrivateKey
+
+	priv.D = new(big.Int).SetBytes(D)
+
+	/* Derive public key from private key */
+	_, err := priv.derive()
+	if err != nil {
+		t.Fatalf("failure deriving public key from private key: %v", err)
+	}
+
+	/* Compare */
+	if bytes.Compare(priv.X.Bytes(), X) != 0 {
+		t.Fatal("derived public key X bytes do not match vector")
+	}
+	if bytes.Compare(priv.Y.Bytes(), Y) != 0 {
+		t.Fatal("derived public key Y bytes do not match vector")
+	}
+
+	t.Log("success derive() on private key")
+}
+
 func TestExportWIF(t *testing.T) {
 	/* Sample Private Key */
 	D := []byte{0x18, 0xE1, 0x4A, 0x7B, 0x6A, 0x30, 0x7F, 0x42, 0x6A, 0x94, 0xF8, 0x11, 0x47, 0x01, 0xE7, 0xC8, 0xE7, 0x74, 0xE7, 0xF9, 0xA4, 0x7E, 0x2C, 0x20, 0x35, 0xDB, 0x29, 0xA2, 0x06, 0x32, 0x17, 0x25}
@@ -152,8 +180,9 @@ func TestExportWIF(t *testing.T) {
 
 	priv.D = new(big.Int).SetBytes(D)
 
-	if wif := priv.ToWIF(); wif != "5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V" {
-		t.Fatal("failure convert private key to wif string failed")
+	wifVector := "5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V"
+	if wif := priv.ToWIF(); wif != wifVector {
+		t.Fatalf("priv.ToWIF(): got %s, expected %s", wif, wifVector)
 	}
 
 	t.Log("success PrivateKey ToWIF()")
@@ -169,9 +198,9 @@ func TestExportAddress(t *testing.T) {
 	pub.X = new(big.Int).SetBytes(X)
 	pub.Y = new(big.Int).SetBytes(Y)
 
-	/* Ensure public key to bitcoin address export matches test vector */
-	if address := pub.ToAddress(0x00); address != "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM" {
-		t.Fatal("failure convert public key to bitcoin address failed")
+	addressVector := "16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM"
+	if address := pub.ToAddress(0x00); address != addressVector {
+		t.Fatalf("pub.ToAddress(): got %s, expected %s", address, addressVector)
 	}
 	t.Log("success PublicKey ToAddress()")
 }

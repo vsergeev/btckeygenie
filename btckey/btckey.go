@@ -31,6 +31,34 @@ type PrivateKey struct {
 	D *big.Int
 }
 
+// derive derives a Bitcoin public key from a Bitcoin private key.
+func (priv *PrivateKey) derive() (pub *PublicKey, err error) {
+	/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
+
+	/* secp256k1 elliptic curve parameters */
+	var curve = &EllipticCurve{}
+	curve.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
+	curve.A, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
+	curve.B, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
+	curve.G.X, _ = new(big.Int).SetString("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16)
+	curve.G.Y, _ = new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
+	curve.N, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
+	curve.H, _ = new(big.Int).SetString("01", 16)
+
+	/* Derive public key from Q = d*G */
+	Q := curve.PointScalarMultiply(priv.D, curve.G)
+
+	/* Check that Q is on the curve */
+	if !curve.IsOnCurve(Q) {
+		return nil, fmt.Errorf("Catastrophic math logic failure.")
+	}
+
+	priv.X = Q.X
+	priv.Y = Q.Y
+
+	return &priv.PublicKey, nil
+}
+
 // GenerateKey generates a public and private key pair.
 func GenerateKey() (priv PrivateKey, err error) {
 	/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
@@ -48,6 +76,7 @@ func GenerateKey() (priv PrivateKey, err error) {
 	/* See SEC1 pg.23 http://www.secg.org/collateral/sec1_final.pdf */
 
 	/* Select private key d randomly from [1, n) */
+
 	/* Random integer uniformly selected from [0, n-1) range */
 	d, err := rand.Int(rand.Reader, new(big.Int).Sub(curve.N, big.NewInt(1)))
 	if err != nil {
@@ -56,17 +85,13 @@ func GenerateKey() (priv PrivateKey, err error) {
 	/* Add one to shift d to [1, n) range */
 	d.Add(d, big.NewInt(1))
 
-	/* Derive public key from Q = d*G */
-	Q := curve.PointScalarMultiply(d, curve.G)
-
-	/* Check that Q is on the curve */
-	if !curve.IsOnCurve(Q) {
-		return priv, fmt.Errorf("Catastrophic math logic failure.")
-	}
-
 	priv.D = d
-	priv.X = Q.X
-	priv.Y = Q.Y
+
+	/* Derive public key from private key */
+	_, err = priv.derive()
+	if err != nil {
+		return priv, err
+	}
 
 	return priv, nil
 }
