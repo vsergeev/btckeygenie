@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestECDSA(t *testing.T) {
+func TestElliptic(t *testing.T) {
 	/* secp256k1 elliptic curve parameters */
 	var curve = &EllipticCurve{}
 	curve.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
