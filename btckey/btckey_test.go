@@ -127,10 +127,7 @@ func TestDerive(t *testing.T) {
 	priv.D = new(big.Int).SetBytes(D)
 
 	/* Derive public key from private key */
-	_, err := priv.derive()
-	if err != nil {
-		t.Fatalf("priv.derive(): got error %v, expected success", err)
-	}
+	priv.derive()
 
 	/* Compare */
 	if bytes.Compare(priv.X.Bytes(), X) != 0 {

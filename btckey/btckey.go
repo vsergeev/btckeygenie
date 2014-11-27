@@ -46,21 +46,21 @@ type PrivateKey struct {
 }
 
 // derive derives a Bitcoin public key from a Bitcoin private key.
-func (priv *PrivateKey) derive() (pub *PublicKey, err error) {
+func (priv *PrivateKey) derive() (pub *PublicKey) {
 	/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
 
 	/* Derive public key from Q = d*G */
-	Q := secp256k1.PointScalarMultiply(priv.D, secp256k1.G)
+	Q := secp256k1.ScalarBaseMult(priv.D)
 
 	/* Check that Q is on the curve */
 	if !secp256k1.IsOnCurve(Q) {
-		return nil, fmt.Errorf("Catastrophic math logic failure in public key derivation.")
+		panic("Catastrophic math logic failure in public key derivation.")
 	}
 
 	priv.X = Q.X
 	priv.Y = Q.Y
 
-	return &priv.PublicKey, nil
+	return &priv.PublicKey
 }
 
 // GenerateKey generates a public and private key pair.
@@ -80,10 +80,7 @@ func GenerateKey() (priv PrivateKey, err error) {
 	priv.D = d
 
 	/* Derive public key from private key */
-	_, err = priv.derive()
-	if err != nil {
-		return priv, err
-	}
+	priv.derive()
 
 	return priv, nil
 }
@@ -277,10 +274,7 @@ func (priv *PrivateKey) FromBytes(b []byte) (err error) {
 	priv.D = new(big.Int).SetBytes(b)
 
 	/* Derive public key from private key */
-	_, err = priv.derive()
-	if err != nil {
-		return err
-	}
+	priv.derive()
 
 	return nil
 }
@@ -320,10 +314,7 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 	}
 
 	/* Derive public key from private key */
-	_, err = priv.derive()
-	if err != nil {
-		return err
-	}
+	priv.derive()
 
 	return nil
 }
