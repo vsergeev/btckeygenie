@@ -25,7 +25,7 @@ type Point struct {
 }
 
 /* y**2 = x**3 + a*x + b */
-// EllipticCurve represents the parameters of an elliptic curve.
+// EllipticCurve represents the parameters of a short Weierstrass equation elliptic curve.
 type EllipticCurve struct {
 	A *big.Int
 	B *big.Int
@@ -42,8 +42,10 @@ func (p *Point) dump() {
 
 // format formats the bytes of a point for debugging.
 func (p *Point) format() string {
-	s := fmt.Sprintf("(%v,%v)", hex.EncodeToString(p.X.Bytes()), hex.EncodeToString(p.Y.Bytes()))
-	return s
+    if p.X == nil && p.Y == nil {
+        return "(inf,inf)"
+    }
+    return fmt.Sprintf("(%s,%s)", hex.EncodeToString(p.X.Bytes()), hex.EncodeToString(p.Y.Bytes()))
 }
 
 /*** Modular Arithmetic ***/
@@ -228,7 +230,10 @@ func (ec *EllipticCurve) Add(P, Q Point) (R Point) {
 
 // ScalarMult computes Q = k * P on EllipticCurve ec.
 func (ec *EllipticCurve) ScalarMult(k *big.Int, P Point) (Q Point) {
-	/* Montgomery Ladder Point Multiplication for constant time operation.
+    /* Note: this function is not constant time, due to the branching nature of
+     * the underlying point Add() function. */
+
+	/* Montgomery Ladder Point Multiplication
 	 *
 	 * Implementation based on pseudocode here:
 	 * See https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Montgomery_ladder */
