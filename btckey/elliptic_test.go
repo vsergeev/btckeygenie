@@ -179,3 +179,41 @@ func TestPointScalarBaseMult(t *testing.T) {
 	}
 	t.Log("success Q on curve")
 }
+
+func TestPointDecompress(t *testing.T) {
+	/* Valid points */
+	var validDecompressVectors = []Point{
+		{hex2int("50863ad64a87ae8a2fe83c1af1a8403cb53f53e486d8511dad8a04887e5b2352"), hex2int("2cd470243453a299fa9e77237716103abc11a1df38855ed6f2ee187e9c582ba6")},
+		{hex2int("a83b8de893467d3a88d959c0eb4032d9ce3bf80f175d4d9e75892a3ebb8ab7e5"), hex2int("370f723328c24b7a97fe34063ba68f253fb08f8645d7c8b9a4ff98e3c29e7f0d")},
+		{hex2int("f680556678e25084a82fa39e1b1dfd0944f7e69fddaa4e03ce934bd6b291dca0"), hex2int("52c10b721d34447e173721fb0151c68de1106badb089fb661523b8302a9097f5")},
+		{hex2int("241febb8e23cbd77d664a18f66ad6240aaec6ecdc813b088d5b901b2e285131f"), hex2int("513378d9ff94f8d3d6c420bd13981df8cd50fd0fbd0cb5afabb3e66f2750026d")},
+	}
+
+	for i := 0; i < len(validDecompressVectors); i++ {
+		P, err := curve.Decompress(validDecompressVectors[i].X, validDecompressVectors[i].Y.Bit(0))
+		if err != nil {
+			t.Fatalf("failure decompress P, got error %v on index %d", err, i)
+		}
+		if P.X.Cmp(validDecompressVectors[i].X) != 0 || P.Y.Cmp(validDecompressVectors[i].Y) != 0 {
+			t.Fatalf("failure decompress P, got mismatch on index", i)
+		}
+	}
+	t.Log("success Decompress() on valid vectors")
+
+	/* Invalid points */
+	var invalidDecompressVectors = []struct {
+		X    *big.Int
+		YLsb uint
+	}{
+		{hex2int("c8e337cee51ae9af3c0ef923705a0cb1b76f7e8463b3d3060a1c8d795f9630fd"), 0},
+		{hex2int("c8e337cee51ae9af3c0ef923705a0cb1b76f7e8463b3d3060a1c8d795f9630fd"), 1},
+	}
+
+	for i := 0; i < len(invalidDecompressVectors); i++ {
+		_, err := curve.Decompress(invalidDecompressVectors[i].X, invalidDecompressVectors[i].YLsb)
+		if err == nil {
+			t.Fatalf("failure decompress invalid P, got decompressed point on index %d", i)
+		}
+	}
+	t.Log("success Decompress() on invalid vectors")
+}

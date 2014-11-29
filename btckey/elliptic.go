@@ -8,6 +8,7 @@ package btckey
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 )
@@ -256,4 +257,32 @@ func (ec *EllipticCurve) ScalarMult(k *big.Int, P Point) (Q Point) {
 // ScalarBaseMult computes Q = k * G on EllipticCurve ec.
 func (ec *EllipticCurve) ScalarBaseMult(k *big.Int) (Q Point) {
 	return ec.ScalarMult(k, ec.G)
+}
+
+// Decompress decompresses coordinate x and ylsb (y's least significant bit) into a Point P on EllipticCurve ec.
+func (ec *EllipticCurve) Decompress(x *big.Int, ylsb uint) (P Point, err error) {
+	/* y**2 = x**3 + a*x + b  % p */
+	rhs := addMod(
+		addMod(
+			expMod(x, big.NewInt(3), ec.P),
+			mulMod(ec.A, x, ec.P),
+			ec.P),
+		ec.B, ec.P)
+
+	/* y = sqrt(rhs) % p */
+	y := sqrtMod(rhs, ec.P)
+
+	/* Use -y if opposite lsb is required */
+	if y.Bit(0) != (ylsb & 0x1) {
+		y = subMod(big.NewInt(0), y, ec.P)
+	}
+
+	P.X = x
+	P.Y = y
+
+	if !ec.IsOnCurve(P) {
+		return P, errors.New("Compressed (x, ylsb) not on curve.")
+	}
+
+	return P, nil
 }
