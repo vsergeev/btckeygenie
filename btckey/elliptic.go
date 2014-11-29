@@ -7,6 +7,7 @@
 package btckey
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 )
@@ -35,17 +36,13 @@ type EllipticCurve struct {
 
 // dump dumps the bytes of a point for debugging.
 func (p *Point) dump() {
-	fmt.Printf("X: ")
-	for _, v := range p.X.Bytes() {
-		fmt.Printf("%02x ", v)
-	}
-	fmt.Println()
+	fmt.Print(p.format())
+}
 
-	fmt.Printf("Y: ")
-	for _, v := range p.Y.Bytes() {
-		fmt.Printf("%02x ", v)
-	}
-	fmt.Println()
+// format formats the bytes of a point for debugging.
+func (p *Point) format() string {
+	s := fmt.Sprintf("(%v,%v)", hex.EncodeToString(p.X.Bytes()), hex.EncodeToString(p.Y.Bytes()))
+	return s
 }
 
 /*** Modular Arithmetic ***/
@@ -114,8 +111,23 @@ func sqrtMod(x *big.Int, p *big.Int) (z *big.Int) {
 
 /*** Point Arithmetic on Curve ***/
 
+// IsInfinity checks if point P is infinity on EllipticCurve ec.
+func (ec *EllipticCurve) IsInfinity(P Point) bool {
+	/* We use (nil,nil) to represent O, the point at infinity. */
+
+	if P.X == nil && P.Y == nil {
+		return true
+	}
+
+	return false
+}
+
 // IsOnCurve checks if point P is on EllipticCurve ec.
 func (ec *EllipticCurve) IsOnCurve(P Point) bool {
+	if ec.IsInfinity(P) {
+		return false
+	}
+
 	/* y**2 = x**3 + a*x + b  % p */
 	lhs := mulMod(P.Y, P.Y, ec.P)
 	rhs := addMod(
@@ -133,24 +145,38 @@ func (ec *EllipticCurve) IsOnCurve(P Point) bool {
 
 // Add computes R = P + Q on EllipticCurve ec.
 func (ec *EllipticCurve) Add(P, Q Point) (R Point) {
-	/* See SEC1 pg.7 http://www.secg.org/collateral/sec1_final.pdf */
+	/* See rules 1-5 on SEC1 pg.7 http://www.secg.org/collateral/sec1_final.pdf */
 
-	if P.X.BitLen() == 0 && P.Y.BitLen() == 0 {
-		/* Identity */
-		/* R = 0 + Q = Q */
+	if ec.IsInfinity(P) && ec.IsInfinity(Q) {
+		/* Rule #1 Identity */
+		/* R = O + O = O */
+
+		R.X = nil
+		R.Y = nil
+
+	} else if ec.IsInfinity(P) {
+		/* Rule #2 Identity */
+		/* R = O + Q = Q */
 
 		R.X = new(big.Int).Set(Q.X)
 		R.Y = new(big.Int).Set(Q.Y)
 
-	} else if Q.X.BitLen() == 0 && Q.Y.BitLen() == 0 {
-		/* Identity */
-		/* R = P + 0 = P */
+	} else if ec.IsInfinity(Q) {
+		/* Rule #2 Identity */
+		/* R = P + O = P */
 
 		R.X = new(big.Int).Set(P.X)
 		R.Y = new(big.Int).Set(P.Y)
 
-	} else if P.X.Cmp(Q.X) == 0 && P.Y.Cmp(Q.Y) == 0 {
-		/* Point doubling */
+	} else if P.X.Cmp(Q.X) == 0 && addMod(P.Y, Q.Y, ec.P).Sign() == 0 {
+		/* Rule #3 Identity */
+		/* R = (x,y) + (x,-y) = O */
+
+		R.X = nil
+		R.Y = nil
+
+	} else if P.X.Cmp(Q.X) == 0 && P.Y.Cmp(Q.Y) == 0 && P.Y.Sign() != 0 {
+		/* Rule #5 Point doubling */
 		/* R = P + P */
 
 		/* Lambda = (3*P.X*P.X + a) / (2*P.Y) */
@@ -171,8 +197,8 @@ func (ec *EllipticCurve) Add(P, Q Point) (R Point) {
 			mulMod(lambda, subMod(P.X, R.X, ec.P), ec.P),
 			P.Y, ec.P)
 
-	} else {
-		/* Point addition */
+	} else if P.X.Cmp(Q.X) != 0 {
+		/* Rule #4 Point addition */
 		/* R = P + Q */
 
 		/* Lambda = (Q.Y - P.Y) / (Q.X - P.X) */
@@ -192,14 +218,11 @@ func (ec *EllipticCurve) Add(P, Q Point) (R Point) {
 			mulMod(lambda,
 				subMod(P.X, R.X, ec.P), ec.P),
 			P.Y, ec.P)
+	} else {
+		panic(fmt.Sprintf("Unsupported point addition: %v + %v", P.format(), Q.format()))
 	}
 
 	return R
-}
-
-// ScalarBaseMult computes Q = k * G on EllipticCurve ec.
-func (ec *EllipticCurve) ScalarBaseMult(k *big.Int) (Q Point) {
-	return ec.ScalarMult(k, ec.G)
 }
 
 // ScalarMult computes Q = k * P on EllipticCurve ec.
@@ -212,8 +235,8 @@ func (ec *EllipticCurve) ScalarMult(k *big.Int, P Point) (Q Point) {
 	var R0 Point
 	var R1 Point
 
-	R0.X = big.NewInt(0)
-	R0.Y = big.NewInt(0)
+	R0.X = nil
+	R0.Y = nil
 	R1.X = new(big.Int).Set(P.X)
 	R1.Y = new(big.Int).Set(P.Y)
 
@@ -228,4 +251,9 @@ func (ec *EllipticCurve) ScalarMult(k *big.Int, P Point) (Q Point) {
 	}
 
 	return R0
+}
+
+// ScalarBaseMult computes Q = k * G on EllipticCurve ec.
+func (ec *EllipticCurve) ScalarBaseMult(k *big.Int) (Q Point) {
+	return ec.ScalarMult(k, ec.G)
 }

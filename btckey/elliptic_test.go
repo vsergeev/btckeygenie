@@ -7,14 +7,15 @@
 package btckey
 
 import (
-	"bytes"
 	"math/big"
 	"testing"
 )
 
-func TestElliptic(t *testing.T) {
+var curve EllipticCurve
+
+func init() {
+	/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
 	/* secp256k1 elliptic curve parameters */
-	var curve = &EllipticCurve{}
 	curve.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
 	curve.A, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
 	curve.B, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
@@ -22,27 +23,159 @@ func TestElliptic(t *testing.T) {
 	curve.G.Y, _ = new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
 	curve.N, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
 	curve.H, _ = new(big.Int).SetString("01", 16)
+}
 
+func hex2int(hexstring string) (v *big.Int) {
+	v, _ = new(big.Int).SetString(hexstring, 16)
+	return v
+}
+
+func TestOnCurve(t *testing.T) {
+	if !curve.IsOnCurve(curve.G) {
+		t.Fatal("failure G on curve")
+	}
+
+	t.Log("G on curve")
+}
+
+func TestInfinity(t *testing.T) {
+	O := Point{nil, nil}
+
+	/* O not on curve */
+	if curve.IsOnCurve(O) {
+		t.Fatal("failure O on curve")
+	}
+
+	/* O is infinity */
+	if !curve.IsInfinity(O) {
+		t.Fatal("failure O not infinity on curve")
+	}
+
+	t.Log("O is not on curve and is infinity")
+}
+
+func TestPointAdd(t *testing.T) {
+	X := "50863ad64a87ae8a2fe83c1af1a8403cb53f53e486d8511dad8a04887e5b2352"
+	Y := "2cd470243453a299fa9e77237716103abc11a1df38855ed6f2ee187e9c582ba6"
+
+	P := Point{hex2int(X), hex2int(Y)}
+	O := Point{nil, nil}
+
+	/* R = O + O = O */
+	{
+		R := curve.Add(O, O)
+		if !curve.IsInfinity(R) {
+			t.Fatal("failure O + O = O")
+		}
+		t.Log("success O + O = O")
+	}
+
+	/* R = P + O = P */
+	{
+		R := curve.Add(P, O)
+		if R.X.Cmp(P.X) != 0 || R.Y.Cmp(P.Y) != 0 {
+			t.Fatal("failure P + O = P")
+		}
+		t.Log("success P + O = P")
+	}
+
+	/* R = O + Q = Q */
+	{
+		R := curve.Add(O, P)
+		if R.X.Cmp(P.X) != 0 || R.Y.Cmp(P.Y) != 0 {
+			t.Fatal("failure O + Q = Q")
+		}
+		t.Log("success O + Q = Q")
+	}
+
+	/* R = (x,y) + (x,-y) = O */
+	{
+		Q := Point{P.X, subMod(big.NewInt(0), P.Y, curve.P)}
+
+		R := curve.Add(P, Q)
+		if !curve.IsInfinity(R) {
+			t.Fatal("failure (x,y) + (x,-y) = O")
+		}
+		t.Log("success (x,y) + (x,-y) = O")
+	}
+
+	/* R = P + P */
+	{
+		PP := Point{hex2int("5dbcd5dfea550eb4fd3b5333f533f086bb5267c776e2a1a9d8e84c16a6743d82"), hex2int("8dde3986b6cbe395da64b6e95fb81f8af73f6e0cf1100555005bb4ba2a6a4a07")}
+
+		R := curve.Add(P, P)
+		if R.X.Cmp(PP.X) != 0 || R.Y.Cmp(PP.Y) != 0 {
+			t.Fatal("failure P + P")
+		}
+		t.Log("success P + P")
+	}
+
+	Q := Point{hex2int("a83b8de893467d3a88d959c0eb4032d9ce3bf80f175d4d9e75892a3ebb8ab7e5"), hex2int("370f723328c24b7a97fe34063ba68f253fb08f8645d7c8b9a4ff98e3c29e7f0d")}
+	PQ := Point{hex2int("fe7d540002e4355eb0ec36c217b4735495de7bd8634055ded3683b0e9da70ef1"), hex2int("fc033c1d74cb34e087a3495e505c0fc0e9e3e8297994878d89d882254ce8a9ef")}
+
+	/* R = P + Q */
+	{
+		R := curve.Add(P, Q)
+		if R.X.Cmp(PQ.X) != 0 || R.Y.Cmp(PQ.Y) != 0 {
+			t.Fatal("failure P + Q")
+		}
+		t.Log("success P + Q")
+	}
+
+	/* R = Q + P */
+	{
+		R := curve.Add(Q, P)
+		if R.X.Cmp(PQ.X) != 0 || R.Y.Cmp(PQ.Y) != 0 {
+			t.Fatal("failure Q + P")
+		}
+		t.Log("success Q + P")
+	}
+}
+
+func TestPointScalarMult(t *testing.T) {
+	X := "50863ad64a87ae8a2fe83c1af1a8403cb53f53e486d8511dad8a04887e5b2352"
+	Y := "2cd470243453a299fa9e77237716103abc11a1df38855ed6f2ee187e9c582ba6"
+	P := Point{hex2int(X), hex2int(Y)}
+
+	/* Q = k*P */
+	{
+		T := Point{hex2int("87d592bfdd24adb52147fea343db93e10d0585bc66d91e365c359973c0dc7067"), hex2int("a374e206cb7c8cd1074bdf9bf6ddea135f983aaa6475c9ab3bb4c38a0046541b")}
+		Q := curve.ScalarMult(hex2int("14eb373700c3836404acd0820d9fa8dfa098d26177ca6e18b1c7f70c6af8fc18"), P)
+		if Q.X.Cmp(T.X) != 0 || Q.Y.Cmp(T.Y) != 0 {
+			t.Fatal("failure k*P")
+		}
+		t.Log("success k*P")
+	}
+
+	/* Q = n*G = O */
+	{
+		Q := curve.ScalarMult(curve.N, curve.G)
+		if !curve.IsInfinity(Q) {
+			t.Fatal("failure n*G = O")
+		}
+		t.Log("success n*G = O")
+	}
+}
+
+func TestPointScalarBaseMult(t *testing.T) {
 	/* Sample Private Key */
-	D := []byte{0x18, 0xE1, 0x4A, 0x7B, 0x6A, 0x30, 0x7F, 0x42, 0x6A, 0x94, 0xF8, 0x11, 0x47, 0x01, 0xE7, 0xC8, 0xE7, 0x74, 0xE7, 0xF9, 0xA4, 0x7E, 0x2C, 0x20, 0x35, 0xDB, 0x29, 0xA2, 0x06, 0x32, 0x17, 0x25}
+	D := "18e14a7b6a307f426a94f8114701e7c8e774e7f9a47e2c2035db29a206321725"
 	/* Sample Corresponding Public Key */
-	X := []byte{0x50, 0x86, 0x3A, 0xD6, 0x4A, 0x87, 0xAE, 0x8A, 0x2F, 0xE8, 0x3C, 0x1A, 0xF1, 0xA8, 0x40, 0x3C, 0xB5, 0x3F, 0x53, 0xE4, 0x86, 0xD8, 0x51, 0x1D, 0xAD, 0x8A, 0x04, 0x88, 0x7E, 0x5B, 0x23, 0x52}
-	Y := []byte{0x2C, 0xD4, 0x70, 0x24, 0x34, 0x53, 0xA2, 0x99, 0xFA, 0x9E, 0x77, 0x23, 0x77, 0x16, 0x10, 0x3A, 0xBC, 0x11, 0xA1, 0xDF, 0x38, 0x85, 0x5E, 0xD6, 0xF2, 0xEE, 0x18, 0x7E, 0x9C, 0x58, 0x2B, 0xA6}
+	X := "50863ad64a87ae8a2fe83c1af1a8403cb53f53e486d8511dad8a04887e5b2352"
+	Y := "2cd470243453a299fa9e77237716103abc11a1df38855ed6f2ee187e9c582ba6"
 
-	/* Compute public key from private key using our elliptic curve arithmetic */
-	Q := curve.ScalarBaseMult(new(big.Int).SetBytes(D))
+	P := Point{hex2int(X), hex2int(Y)}
 
-	/* Ensure they're equal with test vectors */
-	if !bytes.Equal(Q.X.Bytes(), X) || !bytes.Equal(Q.Y.Bytes(), Y) {
-		t.Error("failure computing public key from private key")
-	} else {
-		t.Log("success computing public key from private key")
+	/* Q = d*G = P */
+	Q := curve.ScalarBaseMult(hex2int(D))
+	if P.X.Cmp(Q.X) != 0 || P.Y.Cmp(Q.Y) != 0 {
+		t.Fatal("failure Q = d*G")
 	}
+	t.Log("success Q = d*G")
 
-	/* Ensure our elliptic curve arithmetic believes Q is on the curve */
+	/* Q on curve */
 	if !curve.IsOnCurve(Q) {
-		t.Error("failure public key on curve")
-	} else {
-		t.Log("success public key on curve")
+		t.Fatal("failure Q on curve")
 	}
+	t.Log("success Q on curve")
 }
