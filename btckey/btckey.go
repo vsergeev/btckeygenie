@@ -36,7 +36,7 @@ func init() {
 
 // PublicKey represents a Bitcoin public key.
 type PublicKey struct {
-	X, Y *big.Int
+	Point
 }
 
 // PrivateKey represents a Bitcoin private key.
@@ -323,8 +323,23 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 /* Bitcoin Public Key Import/Export */
 /******************************************************************************/
 
-// ToBytes converts a Bitcoin public key to a bytes slice.
+// ToBytes converts a Bitcoin public key to a bytes slice with point compression.
 func (pub *PublicKey) ToBytes() (b []byte) {
+	x := pub.X.Bytes()
+
+	/* Pad X to 32-bytes */
+	padded_x := append(bytes.Repeat([]byte{0x00}, 32-len(x)), x...)
+
+	/* Add prefix 0x02 or 0x03 depending on ylsb */
+	if pub.Y.Bit(0) == 0 {
+		return append([]byte{0x02}, padded_x...)
+	}
+
+	return append([]byte{0x03}, padded_x...)
+}
+
+// ToBytesUncompressed converts a Bitcoin public key to a bytes slice without point compression.
+func (pub *PublicKey) ToBytesUncompressed() (b []byte) {
 	x := pub.X.Bytes()
 	y := pub.Y.Bytes()
 
@@ -338,22 +353,49 @@ func (pub *PublicKey) ToBytes() (b []byte) {
 
 // FromBytes converts a byte slice to a Bitcoin public key.
 func (pub *PublicKey) FromBytes(b []byte) (err error) {
-	if len(b) != 65 {
-		return fmt.Errorf("Invalid public key bytes length %d, expected 64.", len(b))
+	if len(b) < 33 {
+		return fmt.Errorf("Invalid public key bytes length %d, expected at least 33.", len(b))
 	}
 
-	if b[0] != 0x04 {
-		return fmt.Errorf("Invalid public key prefix byte 0x%02x, expected 0x04.", b[0])
-	}
+	if b[0] == 0x02 || b[0] == 0x03 {
+		/* Compressed public key */
 
-	pub.X = new(big.Int).SetBytes(b[1:33])
-	pub.Y = new(big.Int).SetBytes(b[33:65])
+		if len(b) != 33 {
+			return fmt.Errorf("Invalid public key bytes length %d, expected 33.", len(b))
+		}
+
+		P, err := secp256k1.Decompress(new(big.Int).SetBytes(b[1:33]), uint(b[0]&0x1))
+		if err != nil {
+			return fmt.Errorf("Invalid compressed public key bytes, decompression error: %v", err)
+		}
+
+		pub.X = P.X
+		pub.Y = P.Y
+
+	} else if b[0] == 0x04 {
+		/* Uncompressed public key */
+
+		if len(b) != 65 {
+			return fmt.Errorf("Invalid public key bytes length %d, expected 65.", len(b))
+		}
+
+		pub.X = new(big.Int).SetBytes(b[1:33])
+		pub.Y = new(big.Int).SetBytes(b[33:65])
+
+		/* Check that the point is on the curve */
+		if !secp256k1.IsOnCurve(pub.Point) {
+			return fmt.Errorf("Invalid public key bytes: point not on curve.")
+		}
+
+	} else {
+		return fmt.Errorf("Invalid public key prefix byte 0x%02x, expected 0x02, 0x03, or 0x04.", b[0])
+	}
 
 	return nil
 }
 
-// ToAddress converts a Bitcoin public key to a Bitcoin address string.
-func (pub *PublicKey) ToAddress(version uint8) (address string) {
+// ToAddress converts a Bitcoin public key to a compressed Bitcoin address string.
+func (pub *PublicKey) ToAddress() (address string) {
 	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */
 
 	/* Convert the public key to bytes */
@@ -372,7 +414,32 @@ func (pub *PublicKey) ToAddress(version uint8) (address string) {
 	pub_hash_2 := ripemd160_h.Sum(nil)
 
 	/* Convert hash bytes to base58 check encoded sequence */
-	address = b58checkencode(version, pub_hash_2)
+	address = b58checkencode(0x00, pub_hash_2)
+
+	return address
+}
+
+// ToAddressUncompressed converts a Bitcoin public key to an uncompressed Bitcoin address string.
+func (pub *PublicKey) ToAddressUncompressed() (address string) {
+	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */
+
+	/* Convert the public key to bytes */
+	pub_bytes := pub.ToBytesUncompressed()
+
+	/* SHA256 Hash */
+	sha256_h := sha256.New()
+	sha256_h.Reset()
+	sha256_h.Write(pub_bytes)
+	pub_hash_1 := sha256_h.Sum(nil)
+
+	/* RIPEMD-160 Hash */
+	ripemd160_h := ripemd160.New()
+	ripemd160_h.Reset()
+	ripemd160_h.Write(pub_hash_1)
+	pub_hash_2 := ripemd160_h.Sum(nil)
+
+	/* Convert hash bytes to base58 check encoded sequence */
+	address = b58checkencode(0x00, pub_hash_2)
 
 	return address
 }
