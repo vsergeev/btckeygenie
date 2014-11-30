@@ -179,12 +179,12 @@ func TestPointScalarBaseMult(t *testing.T) {
 	}
 	t.Log("success Q on curve")
 
-    /* R = 0*G = O */
-    R := curve.ScalarBaseMult(big.NewInt(0))
-    if !curve.IsInfinity(R) {
-        t.Fatal("failure 0*G = O")
-    }
-    t.Log("success 0*G = O")
+	/* R = 0*G = O */
+	R := curve.ScalarBaseMult(big.NewInt(0))
+	if !curve.IsInfinity(R) {
+		t.Fatal("failure 0*G = O")
+	}
+	t.Log("success 0*G = O")
 }
 
 func TestPointDecompress(t *testing.T) {

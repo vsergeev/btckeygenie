@@ -42,10 +42,10 @@ func (p *Point) dump() {
 
 // format formats the bytes of a point for debugging.
 func (p *Point) format() string {
-    if p.X == nil && p.Y == nil {
-        return "(inf,inf)"
-    }
-    return fmt.Sprintf("(%s,%s)", hex.EncodeToString(p.X.Bytes()), hex.EncodeToString(p.Y.Bytes()))
+	if p.X == nil && p.Y == nil {
+		return "(inf,inf)"
+	}
+	return fmt.Sprintf("(%s,%s)", hex.EncodeToString(p.X.Bytes()), hex.EncodeToString(p.Y.Bytes()))
 }
 
 /*** Modular Arithmetic ***/
@@ -230,8 +230,8 @@ func (ec *EllipticCurve) Add(P, Q Point) (R Point) {
 
 // ScalarMult computes Q = k * P on EllipticCurve ec.
 func (ec *EllipticCurve) ScalarMult(k *big.Int, P Point) (Q Point) {
-    /* Note: this function is not constant time, due to the branching nature of
-     * the underlying point Add() function. */
+	/* Note: this function is not constant time, due to the branching nature of
+	 * the underlying point Add() function. */
 
 	/* Montgomery Ladder Point Multiplication
 	 *
