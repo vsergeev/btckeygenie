@@ -57,8 +57,9 @@ func main() {
 	pub_bytes_uncompressed_str := byteString(pub_bytes_uncompressed)
 	pub_bytes_uncompressed_b64 := base64.StdEncoding.EncodeToString(pub_bytes_uncompressed)
 
-	/* Convert to WIF */
+	/* Convert to WIF and WIFC */
 	wif := priv.ToWIF()
+	wifc := priv.ToWIFC()
 	/* Convert to Private Key Bytes (32 bytes) */
 	pri_bytes := priv.ToBytes()
 	pri_bytes_str := byteString(pri_bytes)
@@ -73,7 +74,8 @@ func main() {
 	fmt.Printf("                                    %s\n", pub_bytes_uncompressed_str[65:])
 	fmt.Printf("Public Key Base64 (Uncompressed)    %s\n", pub_bytes_uncompressed_b64)
 	fmt.Println()
-	fmt.Printf("Private Key WIF                     %s\n", wif)
+	fmt.Printf("Private Key WIFC (Compressed)       %s\n", wifc)
+	fmt.Printf("Private Key WIF (Uncompressed)      %s\n", wif)
 	fmt.Printf("Private Key Bytes                   %s\n", pri_bytes_str)
 	fmt.Printf("Private Key Base64                  %s\n", pri_bytes_b64)
 }
