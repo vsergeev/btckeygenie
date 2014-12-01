@@ -17,7 +17,7 @@ import (
 )
 
 /******************************************************************************/
-/* Bitcoin Keypair Generation */
+/* ECDSA Keypair Generation */
 /******************************************************************************/
 
 var secp256k1 EllipticCurve
@@ -247,15 +247,20 @@ func CheckWIF(wif string) (valid bool, err error) {
 		return false, fmt.Errorf("Invalid WIF version 0x%02x, expected 0x80.", ver)
 	}
 
-	/* Check that private key bytes length is 32 */
-	if len(priv_bytes) != 32 {
-		return false, fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(priv_bytes))
+	/* Check that private key bytes length is 32 or 33 */
+	if len(priv_bytes) != 32 && len(priv_bytes) != 33 {
+		return false, fmt.Errorf("Invalid private key bytes length %d, expected 32 or 33.", len(priv_bytes))
+	}
+
+	/* If the private key bytes length is 33, check that suffix byte is 0x01 (for compression) */
+	if len(priv_bytes) == 33 && priv_bytes[len(priv_bytes)-1] != 0x01 {
+		return false, fmt.Errorf("Invalid private key bytes, unknown suffix byte 0x%02x.", priv_bytes[len(priv_bytes)-1])
 	}
 
 	return true, nil
 }
 
-// ToBytes converts a Bitcoin private key to a bytes slice.
+// ToBytes converts a Bitcoin private key to a 32-byte (256-bit) bytes slice.
 func (priv *PrivateKey) ToBytes() (b []byte) {
 	d := priv.D.Bytes()
 
@@ -265,7 +270,7 @@ func (priv *PrivateKey) ToBytes() (b []byte) {
 	return padded_d
 }
 
-// FromBytes converts a byte slice to a Bitcoin private key and derives the corresponding Bitcoin public key.
+// FromBytes converts a 32-byte (256-bit) byte slice to a Bitcoin private key and derives the corresponding Bitcoin public key.
 func (priv *PrivateKey) FromBytes(b []byte) (err error) {
 	if len(b) != 32 {
 		return fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(b))
@@ -292,6 +297,22 @@ func (priv *PrivateKey) ToWIF() (wif string) {
 	return wif
 }
 
+// ToWIFC converts a Bitcoin private key to a Wallet Import Format string with the public key compressed flag.
+func (priv *PrivateKey) ToWIFC() (wifc string) {
+	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
+
+	/* Convert the private key to bytes */
+	priv_bytes := priv.ToBytes()
+
+	/* Append 0x01 to tell Bitcoin wallet to use compressed public keys */
+	priv_bytes = append(priv_bytes, []byte{0x01}...)
+
+	/* Convert bytes to base-58 check encoded string with version 0x80 */
+	wifc = b58checkencode(0x80, priv_bytes)
+
+	return wifc
+}
+
 // FromWIF converts a Wallet Import Format string to a Bitcoin private key and derives the corresponding Bitcoin public key.
 func (priv *PrivateKey) FromWIF(wif string) (err error) {
 	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
@@ -305,6 +326,14 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 	/* Check that the version byte is 0x80 */
 	if ver != 0x80 {
 		return fmt.Errorf("Invalid WIF version 0x%02x, expected 0x80.", ver)
+	}
+
+	/* If the private key bytes length is 33, check that suffix byte is 0x01 (for compression) and strip it off */
+	if len(priv_bytes) == 33 {
+		if priv_bytes[len(priv_bytes)-1] != 0x01 {
+			return fmt.Errorf("Invalid private key, unknown suffix byte 0x%02x.", priv_bytes[len(priv_bytes)-1])
+		}
+		priv_bytes = priv_bytes[0:32]
 	}
 
 	/* Convert from bytes to a private key */

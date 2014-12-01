@@ -135,6 +135,7 @@ func TestBase58Check(t *testing.T) {
 
 var keyPairVectors = []struct {
 	wif                    string
+	wifc                   string
 	priv_bytes             []byte
 	address_compressed     string
 	address_uncompressed   string
@@ -146,6 +147,7 @@ var keyPairVectors = []struct {
 }{
 	{
 		"5J1F7GHadZG3sCCKHCwg8Jvys9xUbFsjLnGec4H125Ny1V9nR6V",
+		"Kx45GeUBSMPReYQwgXiKhG9FzNXrnCeutJp4yjTd5kKxCitadm3C",
 		hex2bytes("18E14A7B6A307F426A94F8114701E7C8E774E7F9A47E2C2035DB29A206321725"),
 		"1PMycacnJaSqwwJqjawXBErnLsZ7RkXUAs",
 		"16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM",
@@ -157,6 +159,7 @@ var keyPairVectors = []struct {
 	},
 	{
 		"5JbDYniwPgAn3YqPUkVvrCQdJsjjFx2rV2EYeg5CAH3wNncziMm",
+		"Kze2PJp755t9pFWaDUzgg9MHFtwbWyuBQgSnhHTWFwqy14NafA1S",
 		hex2bytes("660527765029F5F1BC6DFD5821A7FF336C10EDA391E19BB4517DB4E23E5B112F"),
 		"1ChaLikBC5E2uTCA7GZh9vaMQMuRt7h1yq",
 		"17FBpEDgirwQJTvHT6ZgSirWSCbdTB9f76",
@@ -168,6 +171,7 @@ var keyPairVectors = []struct {
 	},
 	{
 		"5KPaskZdrcPmrH3AFdpMF7FFBcYigwdrEfpBN9K5Ch4Ch6Bort4",
+		"L4AgX1H3fyDWxVnXqbVzMGZsbqu11J9eKLKEkKgmYbo8bbs4K9Sq",
 		hex2bytes("CF4DBE1ABCB061DB64CC87404AB736B6A56E8CDD40E9846144582240C5366758"),
 		"1DP4edYeSPAF5UkXomAFKhsXwKq59r26aY",
 		"1K1EJ6Zob7mr6Wye9mF1pVaU4tpDhrYMKJ",
@@ -179,6 +183,7 @@ var keyPairVectors = []struct {
 	},
 	{
 		"5KTzSQJFWc48YdgxXJPb7BhnHu98TUd6C8CDNw6D2dq8fVfC5G8",
+		"L4W8X7q93fipJcwN4jkhYJEzub8survHv6kVdojz6DZSpYUmJYkM",
 		hex2bytes("D94F024E82D787FB38369BEA7478AA61308DC2F7080ADDF69919A881490CFF48"),
 		"1Hicf8AisGTeFqhNuSTw5m5UsYbHRxDxfj",
 		"1CqhvePnxy5ZdvuunhZ7KzaqJVrNfXAk5E",
@@ -190,6 +195,7 @@ var keyPairVectors = []struct {
 	},
 	{
 		"5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsrgA9tXshp",
+		"KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFUFqJ5Vvujp",
 		hex2bytes("0000000000000000000000000000000000000000000000000000000000000400"),
 		"1G73bvYR97QGVb8bfeX2TqvSKietBDybQC",
 		"17imJe7o4mpq2MMfZ328evDJQfbt6ShvxA",
@@ -211,9 +217,10 @@ var invalidPublicKeyBytesVectors = [][]byte{
 var wifInvalidVectors = []string{
 	"5T3IW5p", // Invalid base58
 	"6wi",     // Missing checksum
-	"6Mcb23muAxyXaSMhmB6B1mqkvLdWhtuFZmnZsxDczHRraMcNG",  // Invalid checksum
-	"huzKTSifqNioknFPsoA7uc359rRHJQHRg42uiKn6P8Rnv5qxV5", // Invalid version byte
-	"yPoVP5njSzmEVK4VJGRWWAwqnwCyLPRcMm5XyrKgYUpeXtGyM",  // Invalid private key byte length
+	"6Mcb23muAxyXaSMhmB6B1mqkvLdWhtuFZmnZsxDczHRraMcNG",    // Invalid checksum
+	"huzKTSifqNioknFPsoA7uc359rRHJQHRg42uiKn6P8Rnv5qxV5",   // Invalid version byte
+	"yPoVP5njSzmEVK4VJGRWWAwqnwCyLPRcMm5XyrKgYUpeXtGyM",    // Invalid private key byte length
+	"Kx45GeUBSMPReYQwgXiKhG9FzNXrnCeutJp4yjTd5kKxCj6CAKu3", // Invalid private key suffix byte
 }
 
 func TestCheckWIF(t *testing.T) {
@@ -222,6 +229,10 @@ func TestCheckWIF(t *testing.T) {
 		got, err := CheckWIF(keyPairVectors[i].wif)
 		if got == false {
 			t.Fatalf("CheckWIF(%s): got false, error %v, expected true", keyPairVectors[i].wif, err)
+		}
+		got, err = CheckWIF(keyPairVectors[i].wifc)
+		if got == false {
+			t.Fatalf("CheckWIF(%s): got false, error %v, expected true", keyPairVectors[i].wifc, err)
 		}
 	}
 	t.Log("success CheckWIF() on valid vectors")
@@ -260,6 +271,7 @@ func TestPrivateKeyDerive(t *testing.T) {
 func TestPrivateKeyFromBytes(t *testing.T) {
 	var priv PrivateKey
 
+	/* Check valid vectors */
 	for i := 0; i < len(keyPairVectors); i++ {
 		err := priv.FromBytes(keyPairVectors[i].priv_bytes)
 		if err != nil {
@@ -272,18 +284,26 @@ func TestPrivateKeyFromBytes(t *testing.T) {
 			t.Fatalf("public key does not match test vector on index %d", i)
 		}
 	}
+	t.Log("success PrivateKey FromBytes() on valid vectors")
 
 	/* Invalid short private key */
 	err := priv.FromBytes(keyPairVectors[0].priv_bytes[0:31])
 	if err == nil {
 		t.Fatalf("priv.FromBytes(D): got success, expected error")
 	}
-	t.Log("success PrivateKey FromBytes()")
+	/* Invalid long private key */
+	err = priv.FromBytes(append(keyPairVectors[0].priv_bytes, []byte{0x00}...))
+	if err == nil {
+		t.Fatalf("priv.FromBytes(D): got success, expected error")
+	}
+
+	t.Log("success PrivateKey FromBytes() on invaild vectors")
 }
 
 func TestPrivateKeyToBytes(t *testing.T) {
 	var priv PrivateKey
 
+	/* Check valid vectors */
 	for i := 0; i < len(keyPairVectors); i++ {
 		priv.D = keyPairVectors[i].D
 		b := priv.ToBytes()
@@ -299,9 +319,22 @@ func TestPrivateKeyFromWIF(t *testing.T) {
 
 	/* Check valid vectors */
 	for i := 0; i < len(keyPairVectors); i++ {
+		/* Import WIF */
 		err := priv.FromWIF(keyPairVectors[i].wif)
 		if err != nil {
 			t.Fatalf("priv.FromWIF(%s): got error %v, expected success", keyPairVectors[i].wif, err)
+		}
+		if priv.D.Cmp(keyPairVectors[i].D) != 0 {
+			t.Fatalf("private key does not match test vector on index %d", i)
+		}
+		if priv.X.Cmp(keyPairVectors[i].X) != 0 || priv.Y.Cmp(keyPairVectors[i].Y) != 0 {
+			t.Fatalf("public key does not match test vector on index %d", i)
+		}
+
+		/* Import WIFC */
+		err = priv.FromWIF(keyPairVectors[i].wifc)
+		if err != nil {
+			t.Fatalf("priv.FromWIF(%s): got error %v, expected success", keyPairVectors[i].wifc, err)
 		}
 		if priv.D.Cmp(keyPairVectors[i].D) != 0 {
 			t.Fatalf("private key does not match test vector on index %d", i)
@@ -328,6 +361,7 @@ func TestPrivateKeyToWIF(t *testing.T) {
 
 	/* Check valid vectors */
 	for i := 0; i < len(keyPairVectors); i++ {
+		/* Export WIF */
 		priv.D = keyPairVectors[i].D
 		wif := priv.ToWIF()
 		if wif != keyPairVectors[i].wif {
@@ -335,6 +369,17 @@ func TestPrivateKeyToWIF(t *testing.T) {
 		}
 	}
 	t.Log("success PrivateKey ToWIF()")
+
+	/* Check valid vectors */
+	for i := 0; i < len(keyPairVectors); i++ {
+		/* Export WIFC */
+		priv.D = keyPairVectors[i].D
+		wifc := priv.ToWIFC()
+		if wifc != keyPairVectors[i].wifc {
+			t.Fatalf("priv.ToWIFC() %s != expected %s", wifc, keyPairVectors[i].wifc)
+		}
+	}
+	t.Log("success PrivateKey ToWIFC()")
 }
 
 /******************************************************************************/
