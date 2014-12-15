@@ -1,5 +1,4 @@
-gobtcaddr v1.0
-==============
+# gobtcaddr v1.0
 
 gobtcaddr is a standalone Bitcoin address generator written in Go. gobtcaddr
 generates an ECDSA secp256k1 keypair, dumps the public key in compressed and
@@ -13,15 +12,9 @@ Bitcoin Address, Wallet Import Format, and raw bytes.
 
 See documentation on btckey here: https://godoc.org/github.com/vsergeev/gobtcaddr/btckey
 
-gobtcaddr is MIT licensed. See the provided LICENSE file.
-
 Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :)
 
-Feel free to report any issues, bug reports, or suggestions at github or by
-email at vsergeev at gmail.
-
-Example
--------
+## Usage
 
     $ gobtcaddr
     Bitcoin Address (Compressed)        14ySRLDc1Dqaj9i36eLnryMKGZ8yHqByyz
@@ -39,8 +32,16 @@ Example
     Private Key Base64                  XQcq0nplsCEHGKsYUujDvUBUUj/jJ/3v8HCtE/Z1jbo=
     $
 
-Building
---------
+## Building
 
     $ go install github.com/vsergeev/gobtcaddr
+
+## Issues
+
+Feel free to report any issues, bug reports, or suggestions at github or by
+email at vsergeev at gmail.
+
+## License
+
+gobtcaddr is MIT licensed. See the included `LICENSE` file for more details.
 
