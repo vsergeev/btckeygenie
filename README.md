@@ -12,7 +12,7 @@ Bitcoin Address, Wallet Import Format, and raw bytes.
 
 See documentation on btckey here: https://godoc.org/github.com/vsergeev/btckeygenie/btckey
 
-Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :)
+Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :-)
 
 ## Usage
 

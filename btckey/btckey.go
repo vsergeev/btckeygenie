@@ -95,7 +95,7 @@ func GenerateKey(rand io.Reader) (priv PrivateKey, err error) {
 /* Base-58 Encode/Decode */
 /******************************************************************************/
 
-// b58encode encodes a bytes slice b into a base-58 encoded string.
+// b58encode encodes a byte slice b into a base-58 encoded string.
 func b58encode(b []byte) (s string) {
 	/* See https://en.bitcoin.it/wiki/Base58Check_encoding */
 
@@ -121,7 +121,7 @@ func b58encode(b []byte) (s string) {
 	return s
 }
 
-// b58decode decodes a base-58 encoded string into a bytes slice b.
+// b58decode decodes a base-58 encoded string into a byte slice b.
 func b58decode(s string) (b []byte, err error) {
 	/* See https://en.bitcoin.it/wiki/Base58Check_encoding */
 
@@ -152,7 +152,7 @@ func b58decode(s string) (b []byte, err error) {
 /* Base-58 Check Encode/Decode */
 /******************************************************************************/
 
-// b58checkencode encodes version ver and bytes slice b into a base-58 check encoded string.
+// b58checkencode encodes version ver and byte slice b into a base-58 check encoded string.
 func b58checkencode(ver uint8, b []byte) (s string) {
 	/* Prepend version */
 	bcpy := append([]byte{ver}, b...)
@@ -187,7 +187,7 @@ func b58checkencode(ver uint8, b []byte) (s string) {
 	return s
 }
 
-// b58checkdecode decodes base-58 check encoded string s into a version ver and bytes slice b.
+// b58checkdecode decodes base-58 check encoded string s into a version ver and byte slice b.
 func b58checkdecode(s string) (ver uint8, b []byte, err error) {
 	/* Decode base58 string */
 	b, err = b58decode(s)
@@ -240,7 +240,7 @@ func b58checkdecode(s string) (ver uint8, b []byte, err error) {
 /* Bitcoin Private Key Import/Export */
 /******************************************************************************/
 
-// CheckWIF checks that string wif is a valid Wallet Import File string.
+// CheckWIF checks that string wif is a valid Wallet Import Format or Wallet Import Format Compressed string. If it is not, err is populated with the reason.
 func CheckWIF(wif string) (valid bool, err error) {
 	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
 
@@ -268,7 +268,7 @@ func CheckWIF(wif string) (valid bool, err error) {
 	return true, nil
 }
 
-// ToBytes converts a Bitcoin private key to a 32-byte (256-bit) bytes slice.
+// ToBytes converts a Bitcoin private key to a 32-byte byte slice.
 func (priv *PrivateKey) ToBytes() (b []byte) {
 	d := priv.D.Bytes()
 
@@ -278,7 +278,7 @@ func (priv *PrivateKey) ToBytes() (b []byte) {
 	return padded_d
 }
 
-// FromBytes converts a 32-byte (256-bit) byte slice to a Bitcoin private key and derives the corresponding Bitcoin public key.
+// FromBytes converts a 32-byte byte slice to a Bitcoin private key and derives the corresponding Bitcoin public key.
 func (priv *PrivateKey) FromBytes(b []byte) (err error) {
 	if len(b) != 32 {
 		return fmt.Errorf("Invalid private key bytes length %d, expected 32.", len(b))
@@ -360,7 +360,7 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 /* Bitcoin Public Key Import/Export */
 /******************************************************************************/
 
-// ToBytes converts a Bitcoin public key to a bytes slice with point compression.
+// ToBytes converts a Bitcoin public key to a 33-byte byte slice with point compression.
 func (pub *PublicKey) ToBytes() (b []byte) {
 	/* See Certicom SEC1 2.3.3, pg. 10 */
 
@@ -377,7 +377,7 @@ func (pub *PublicKey) ToBytes() (b []byte) {
 	return append([]byte{0x03}, padded_x...)
 }
 
-// ToBytesUncompressed converts a Bitcoin public key to a bytes slice without point compression.
+// ToBytesUncompressed converts a Bitcoin public key to a 65-byte byte slice without point compression.
 func (pub *PublicKey) ToBytesUncompressed() (b []byte) {
 	/* See Certicom SEC1 2.3.3, pg. 10 */
 
@@ -392,7 +392,7 @@ func (pub *PublicKey) ToBytesUncompressed() (b []byte) {
 	return append([]byte{0x04}, append(padded_x, padded_y...)...)
 }
 
-// FromBytes converts a byte slice to a Bitcoin public key.
+// FromBytes converts a byte slice (either with or without point compression) to a Bitcoin public key.
 func (pub *PublicKey) FromBytes(b []byte) (err error) {
 	/* See Certicom SEC1 2.3.4, pg. 11 */
 

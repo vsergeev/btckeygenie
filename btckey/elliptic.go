@@ -23,7 +23,7 @@ type Point struct {
 	Y *big.Int
 }
 
-/* y**2 = x**3 + a*x + b */
+/* y**2 = x**3 + a*x + b  % p */
 // EllipticCurve represents the parameters of a short Weierstrass equation elliptic curve.
 type EllipticCurve struct {
 	A *big.Int
