@@ -29,6 +29,13 @@ func main() {
 	var priv btckey.PrivateKey
 	var err error
 
+	/* Help/Usage */
+	if len(os.Args) > 1 && (os.Args[1] == "-h" || os.Args[1] == "--help") {
+		fmt.Printf("Usage: %s [WIF/WIFC]\n\n", os.Args[0])
+		fmt.Println("btckeygenie v1.0.0 - https://github.com/vsergeev/btckeygenie")
+		os.Exit(0)
+	}
+
 	/* Import WIF from first argument */
 	if len(os.Args) > 1 {
 		err = priv.FromWIF(os.Args[1])
