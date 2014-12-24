@@ -8,6 +8,7 @@ package btckey
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/hex"
 	"math/big"
 	"testing"
@@ -460,4 +461,39 @@ func TestToAddress(t *testing.T) {
 		}
 	}
 	t.Log("success PublicKey ToAddress() and ToAddressUncompressed()")
+}
+
+/******************************************************************************/
+/* Generating Keys */
+/******************************************************************************/
+
+func TestGenerateKey(t *testing.T) {
+	/* Generate a keypair and check public key validity */
+	priv1, err := GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("GenerateKey(): got error %v", err)
+	}
+	if !secp256k1.IsOnCurve(priv1.PublicKey.Point) {
+		t.Fatalf("GenerateKey(): public key not on curve")
+	}
+
+	/* Generate another keypair and check public key validity */
+	priv2, err := GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatalf("GenerateKey(): got error %v", err)
+	}
+	if !secp256k1.IsOnCurve(priv1.PublicKey.Point) {
+		t.Fatalf("GenerateKey(): public key not on curve")
+	}
+
+	/* Compare keypair private keys */
+	if priv1.D == priv2.D {
+		t.Fatalf("generated duplicate private keys")
+	}
+	/* Compare keypair public keys */
+	if priv1.X.Cmp(priv2.X) == 0 && priv2.Y.Cmp(priv2.Y) == 0 {
+		t.Fatalf("generated duplicate public keys")
+	}
+
+	t.Log("success GenerateKey()")
 }
