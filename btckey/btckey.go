@@ -9,9 +9,9 @@ package btckey
 import (
 	"bytes"
 	"code.google.com/p/go.crypto/ripemd160"
-	"crypto/rand"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"math/big"
 	"strings"
 )
@@ -63,17 +63,24 @@ func (priv *PrivateKey) derive() (pub *PublicKey) {
 	return &priv.PublicKey
 }
 
-// GenerateKey generates a public and private key pair.
-func GenerateKey() (priv PrivateKey, err error) {
-	/* See SEC1 pg.23 http://www.secg.org/collateral/sec1_final.pdf */
+// GenerateKey generates a public and private key pair using random source rand.
+func GenerateKey(rand io.Reader) (priv PrivateKey, err error) {
+	/* See Certicom's SEC1 3.2.1, pg.23 */
+	/* See NSA's Suite B Implementer’s Guide to FIPS 186-3 (ECDSA) A.1.1, pg.18 */
 
 	/* Select private key d randomly from [1, n) */
 
-	/* Random integer uniformly selected from [0, n-1) range */
-	d, err := rand.Int(rand.Reader, new(big.Int).Sub(secp256k1.N, big.NewInt(1)))
+	/* Read N bit length random bytes + 64 extra bits  */
+	b := make([]byte, secp256k1.N.BitLen()/8+8)
+	_, err = io.ReadFull(rand, b)
 	if err != nil {
-		return priv, fmt.Errorf("Generating random private key.")
+		return priv, fmt.Errorf("Reading random reader: %v", err)
 	}
+
+	d := new(big.Int).SetBytes(b)
+
+	/* Mod n-1 to shift d into [0, n-1) range */
+	d.Mod(d, new(big.Int).Sub(secp256k1.N, big.NewInt(1)))
 	/* Add one to shift d to [1, n) range */
 	d.Add(d, big.NewInt(1))
 

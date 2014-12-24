@@ -7,6 +7,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"github.com/vsergeev/gobtcaddr/btckey"
@@ -37,7 +38,7 @@ func main() {
 		}
 	} else {
 		/* Generate a new Bitcoin keypair */
-		priv, err = btckey.GenerateKey()
+		priv, err = btckey.GenerateKey(rand.Reader)
 		if err != nil {
 			log.Fatalf("Generating keypair: %s\n", err)
 		}
