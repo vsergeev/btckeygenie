@@ -23,7 +23,7 @@ import (
 var secp256k1 EllipticCurve
 
 func init() {
-	/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
+	/* See Certicom's SEC2 2.7.1, pg.15 */
 	/* secp256k1 elliptic curve parameters */
 	secp256k1.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
 	secp256k1.A, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
@@ -47,7 +47,7 @@ type PrivateKey struct {
 
 // derive derives a Bitcoin public key from a Bitcoin private key.
 func (priv *PrivateKey) derive() (pub *PublicKey) {
-	/* See SEC2 pg.9 http://www.secg.org/collateral/sec2_final.pdf */
+	/* See Certicom's SEC1 3.2.1, pg.23 */
 
 	/* Derive public key from Q = d*G */
 	Q := secp256k1.ScalarBaseMult(priv.D)
@@ -236,6 +236,8 @@ func b58checkdecode(s string) (ver uint8, b []byte, err error) {
 
 // CheckWIF checks that string wif is a valid Wallet Import File string.
 func CheckWIF(wif string) (valid bool, err error) {
+	/* See https://en.bitcoin.it/wiki/Wallet_import_format */
+
 	/* Base58 Check Decode the WIF string */
 	ver, priv_bytes, err := b58checkdecode(wif)
 	if err != nil {
@@ -354,6 +356,8 @@ func (priv *PrivateKey) FromWIF(wif string) (err error) {
 
 // ToBytes converts a Bitcoin public key to a bytes slice with point compression.
 func (pub *PublicKey) ToBytes() (b []byte) {
+	/* See Certicom SEC1 2.3.3, pg. 10 */
+
 	x := pub.X.Bytes()
 
 	/* Pad X to 32-bytes */
@@ -369,6 +373,8 @@ func (pub *PublicKey) ToBytes() (b []byte) {
 
 // ToBytesUncompressed converts a Bitcoin public key to a bytes slice without point compression.
 func (pub *PublicKey) ToBytesUncompressed() (b []byte) {
+	/* See Certicom SEC1 2.3.3, pg. 10 */
+
 	x := pub.X.Bytes()
 	y := pub.Y.Bytes()
 
@@ -382,6 +388,8 @@ func (pub *PublicKey) ToBytesUncompressed() (b []byte) {
 
 // FromBytes converts a byte slice to a Bitcoin public key.
 func (pub *PublicKey) FromBytes(b []byte) (err error) {
+	/* See Certicom SEC1 2.3.4, pg. 11 */
+
 	if len(b) < 33 {
 		return fmt.Errorf("Invalid public key bytes length %d, expected at least 33.", len(b))
 	}
