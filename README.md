@@ -16,7 +16,7 @@ Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :)
 
 ## Usage
 
-Generating a new keypair
+#### Generating a new keypair
 
     $ btckeygenie
     Bitcoin Address (Compressed)        1GwX827vFH6cc11sE7jKyhUTsRTZbrNBbD
@@ -34,7 +34,7 @@ Generating a new keypair
     Private Key Base64                  6FR9V2zoqRG/TeaEvp6Mv09DjOMTkNe5wij+oY1zeGw=
     $
 
-Importing an existing WIF/WIFC
+#### Importing an existing WIF/WIFC
 
     $ btckeygenie L51L6m126TParjMtoscEiY2Fr9rfXCMW2vyhtLd3wRs9aY27WEKR
     Bitcoin Address (Compressed)        1GwX827vFH6cc11sE7jKyhUTsRTZbrNBbD
@@ -52,7 +52,7 @@ Importing an existing WIF/WIFC
     Private Key Base64                  6FR9V2zoqRG/TeaEvp6Mv09DjOMTkNe5wij+oY1zeGw=
     $
 
-Help/Usage
+#### Help/Usage
 
     $ btckeygenie -h
     Usage: btckeygenie [WIF/WIFC]
@@ -61,6 +61,8 @@ Help/Usage
     $
 
 ## Installation
+
+AUR package: <https://aur.archlinux.org/packages/btckeygenie/>
 
     $ go install github.com/vsergeev/btckeygenie
 
