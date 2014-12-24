@@ -1,7 +1,6 @@
-/* gobtcaddr v1.0
- * vsergeev
- * https://github.com/vsergeev/gobtcaddr
- * MIT Licensed
+/* btckeygenie v1.0.0
+ * https://github.com/vsergeev/btckeygenie
+ * License: MIT
  */
 
 package btckey

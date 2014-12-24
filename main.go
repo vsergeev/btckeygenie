@@ -1,7 +1,6 @@
-/* gobtcaddr v1.0
- * vsergeev
- * https://github.com/vsergeev/gobtcaddr
- * MIT Licensed
+/* btckeygenie v1.0.0
+ * https://github.com/vsergeev/btckeygenie
+ * License: MIT
  */
 
 package main
@@ -10,7 +9,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"github.com/vsergeev/gobtcaddr/btckey"
+	"github.com/vsergeev/btckeygenie/btckey"
 	"log"
 	"os"
 )
