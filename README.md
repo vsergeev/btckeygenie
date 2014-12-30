@@ -64,12 +64,19 @@ Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :-)
 
 AUR package: <https://aur.archlinux.org/packages/btckeygenie/>
 
-    $ go install github.com/vsergeev/btckeygenie
+To fetch, build, and install btckeygenie to `$GOPATH/bin`:
+
+    $ go get github.com/vsergeev/btckeygenie
+
+To build btckeygenie locally:
+
+    $ git clone https://github.com/vsergeev/btckeygenie.git
+    $ cd btckeygenie
+    $ go build
 
 ## Issues
 
-Feel free to report any issues, bug reports, or suggestions at github or by
-email at vsergeev at gmail.
+Feel free to report any issues, bug reports, or suggestions at github or by email at vsergeev at gmail.
 
 ## License
 
