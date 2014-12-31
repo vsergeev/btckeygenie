@@ -201,7 +201,7 @@ func TestPointDecompress(t *testing.T) {
 			t.Fatalf("failure decompress P, got error %v on index %d", err, i)
 		}
 		if P.X.Cmp(validDecompressVectors[i].X) != 0 || P.Y.Cmp(validDecompressVectors[i].Y) != 0 {
-			t.Fatalf("failure decompress P, got mismatch on index", i)
+			t.Fatalf("failure decompress P, got mismatch on index %d", i)
 		}
 	}
 	t.Log("success Decompress() on valid vectors")
