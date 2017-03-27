@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/tobyjsullivan/btckeygenie",
+	"GoVersion": "go1.6",
+	"GodepVersion": "v62",
+	"Deps": [
+		{
+			"ImportPath": "golang.org/x/crypto/ripemd160",
+			"Rev": "3fbbcd23f1cb824e69491a5930cfeff09b12f4d2"
+		}
+	]
+}
