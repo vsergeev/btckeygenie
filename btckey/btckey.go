@@ -7,30 +7,39 @@ package btckey
 
 import (
 	"bytes"
-	"golang.org/x/crypto/ripemd160"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"math/big"
 	"strings"
+
+	"golang.org/x/crypto/ripemd160"
 )
 
 /******************************************************************************/
 /* ECDSA Keypair Generation */
 /******************************************************************************/
 
-var secp256k1 EllipticCurve
+var secp256r1 EllipticCurve
 
 func init() {
 	/* See Certicom's SEC2 2.7.1, pg.15 */
 	/* secp256k1 elliptic curve parameters */
-	secp256k1.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
-	secp256k1.A, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
-	secp256k1.B, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
-	secp256k1.G.X, _ = new(big.Int).SetString("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16)
-	secp256k1.G.Y, _ = new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
-	secp256k1.N, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
-	secp256k1.H, _ = new(big.Int).SetString("01", 16)
+	// secp256k1.P, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16)
+	// secp256k1.A, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000000", 16)
+	// secp256k1.B, _ = new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000007", 16)
+	// secp256k1.G.X, _ = new(big.Int).SetString("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16)
+	// secp256k1.G.Y, _ = new(big.Int).SetString("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
+	// secp256k1.N, _ = new(big.Int).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
+	// secp256k1.H, _ = new(big.Int).SetString("01", 16)
+
+	secp256r1.P, _ = new(big.Int).SetString("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF", 16) //Q
+	secp256r1.A, _ = new(big.Int).SetString("FFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC", 16)
+	secp256r1.B, _ = new(big.Int).SetString("5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B", 16)
+	secp256r1.G.X, _ = new(big.Int).SetString("6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296", 16)
+	secp256r1.G.Y, _ = new(big.Int).SetString("4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5", 16)
+	secp256r1.N, _ = new(big.Int).SetString("FFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551", 16)
+	secp256r1.H, _ = new(big.Int).SetString("01", 16)
 }
 
 // PublicKey represents a Bitcoin public key.
@@ -49,10 +58,10 @@ func (priv *PrivateKey) derive() (pub *PublicKey) {
 	/* See Certicom's SEC1 3.2.1, pg.23 */
 
 	/* Derive public key from Q = d*G */
-	Q := secp256k1.ScalarBaseMult(priv.D)
+	Q := secp256r1.ScalarBaseMult(priv.D)
 
 	/* Check that Q is on the curve */
-	if !secp256k1.IsOnCurve(Q) {
+	if !secp256r1.IsOnCurve(Q) {
 		panic("Catastrophic math logic failure in public key derivation.")
 	}
 
@@ -70,7 +79,7 @@ func GenerateKey(rand io.Reader) (priv PrivateKey, err error) {
 	/* Select private key d randomly from [1, n) */
 
 	/* Read N bit length random bytes + 64 extra bits  */
-	b := make([]byte, secp256k1.N.BitLen()/8+8)
+	b := make([]byte, secp256r1.N.BitLen()/8+8)
 	_, err = io.ReadFull(rand, b)
 	if err != nil {
 		return priv, fmt.Errorf("Reading random reader: %v", err)
@@ -79,7 +88,7 @@ func GenerateKey(rand io.Reader) (priv PrivateKey, err error) {
 	d := new(big.Int).SetBytes(b)
 
 	/* Mod n-1 to shift d into [0, n-1) range */
-	d.Mod(d, new(big.Int).Sub(secp256k1.N, big.NewInt(1)))
+	d.Mod(d, new(big.Int).Sub(secp256r1.N, big.NewInt(1)))
 	/* Add one to shift d to [1, n) range */
 	d.Add(d, big.NewInt(1))
 
@@ -183,6 +192,41 @@ func b58checkencode(ver uint8, b []byte) (s string) {
 		}
 		s = "1" + s
 	}
+
+	return s
+}
+
+// b58checkencode encodes version ver and byte slice b into a base-58 check encoded string.
+func b58checkencodeNEO(ver uint8, b []byte) (s string) {
+	/* Prepend version */
+	bcpy := append([]byte{ver}, b...)
+
+	/* Create a new SHA256 context */
+	sha256_h := sha256.New()
+
+	/* SHA256 Hash #1 */
+	sha256_h.Reset()
+	sha256_h.Write(bcpy)
+	hash1 := sha256_h.Sum(nil)
+
+	/* SHA256 Hash #2 */
+	sha256_h.Reset()
+	sha256_h.Write(hash1)
+	hash2 := sha256_h.Sum(nil)
+
+	/* Append first four bytes of hash */
+	bcpy = append(bcpy, hash2[0:4]...)
+
+	/* Encode base58 string */
+	s = b58encode(bcpy)
+
+	// /* For number of leading 0's in bytes, prepend 1 */
+	// for _, v := range bcpy {
+	// 	if v != 0 {
+	// 		break
+	// 	}
+	// 	s = "1" + s
+	// }
 
 	return s
 }
@@ -407,7 +451,7 @@ func (pub *PublicKey) FromBytes(b []byte) (err error) {
 			return fmt.Errorf("Invalid public key bytes length %d, expected 33.", len(b))
 		}
 
-		P, err := secp256k1.Decompress(new(big.Int).SetBytes(b[1:33]), uint(b[0]&0x1))
+		P, err := secp256r1.Decompress(new(big.Int).SetBytes(b[1:33]), uint(b[0]&0x1))
 		if err != nil {
 			return fmt.Errorf("Invalid compressed public key bytes, decompression error: %v", err)
 		}
@@ -426,7 +470,7 @@ func (pub *PublicKey) FromBytes(b []byte) (err error) {
 		pub.Y = new(big.Int).SetBytes(b[33:65])
 
 		/* Check that the point is on the curve */
-		if !secp256k1.IsOnCurve(pub.Point) {
+		if !secp256r1.IsOnCurve(pub.Point) {
 			return fmt.Errorf("Invalid public key bytes: point not on curve.")
 		}
 
@@ -435,6 +479,52 @@ func (pub *PublicKey) FromBytes(b []byte) (err error) {
 	}
 
 	return nil
+}
+
+func sha256Bytes(b []byte) []byte {
+	/* SHA256 Hash */
+	sha256_h := sha256.New()
+	sha256_h.Reset()
+	sha256_h.Write(b)
+	return sha256_h.Sum(nil)
+}
+
+// ToAddress converts a Bitcoin public key to a compressed Bitcoin address string.
+func (pub *PublicKey) ToNeoAddress() (address string) {
+	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */
+
+	/* Convert the public key to bytes */
+	pub_bytes := pub.ToBytes()
+
+	pub_bytes = append([]byte{0x21}, pub_bytes...)
+	pub_bytes = append(pub_bytes, 0xAC)
+
+	/* SHA256 Hash */
+	sha256_h := sha256.New()
+	sha256_h.Reset()
+	sha256_h.Write(pub_bytes)
+	pub_hash_1 := sha256_h.Sum(nil)
+
+	/* RIPEMD-160 Hash */
+	ripemd160_h := ripemd160.New()
+	ripemd160_h.Reset()
+	ripemd160_h.Write(pub_hash_1)
+	pub_hash_2 := ripemd160_h.Sum(nil)
+
+	program_hash := pub_hash_2
+
+	//wallet version
+	//program_hash = append([]byte{0x17}, program_hash...)
+
+	// doublesha := sha256Bytes(sha256Bytes(program_hash))
+
+	// checksum := doublesha[0:4]
+
+	// result := append(program_hash, checksum...)
+	/* Convert hash bytes to base58 check encoded sequence */
+	address = b58checkencodeNEO(0x17, program_hash)
+
+	return address
 }
 
 // ToAddress converts a Bitcoin public key to a compressed Bitcoin address string.
