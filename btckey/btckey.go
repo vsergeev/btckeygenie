@@ -489,6 +489,27 @@ func sha256Bytes(b []byte) []byte {
 	return sha256_h.Sum(nil)
 }
 
+func (pub *PublicKey) ToNeoSignature() (signature []byte) {
+	pub_bytes := pub.ToBytes()
+
+	pub_bytes = append([]byte{0x21}, pub_bytes...)
+	pub_bytes = append(pub_bytes, 0xAC)
+
+	/* SHA256 Hash */
+	sha256_h := sha256.New()
+	sha256_h.Reset()
+	sha256_h.Write(pub_bytes)
+	pub_hash_1 := sha256_h.Sum(nil)
+
+	/* RIPEMD-160 Hash */
+	ripemd160_h := ripemd160.New()
+	ripemd160_h.Reset()
+	ripemd160_h.Write(pub_hash_1)
+	pub_hash_2 := ripemd160_h.Sum(nil)
+
+	return pub_hash_2
+}
+
 // ToAddress converts a Bitcoin public key to a compressed Bitcoin address string.
 func (pub *PublicKey) ToNeoAddress() (address string) {
 	/* See https://en.bitcoin.it/wiki/Technical_background_of_Bitcoin_addresses */
