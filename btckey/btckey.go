@@ -600,27 +600,33 @@ func (pub *PublicKey) ToAddressUncompressed() (address string) {
 	return address
 }
 
-func PrivateKeyFromInt(key int64) (*ecdsa.PrivateKey) {
-	prKey.D = big.NewInt(key)
-    prKey.PublicKey.Curve = elliptic.P256()
-    return prKey
+func PrivateKeyFromHexString(key string) *ecdsa.PrivateKey {
+	var prKey *ecdsa.PrivateKey
+	keyBytes, _ := hex.DecodeString(key)
+	
+	keyBigInt := new(big.Int)
+    keyBigInt.SetBytes(keyBytes)
+	
+	prKey.D = keyBigInt
+	prKey.PublicKey.Curve = elliptic.P256()
+	return prKey
 }
 
-// Sign signs arbitrary data using ECDSA.
-func Sign(data []byte, key int64) ([]byte, error) {
+func Sign(data []byte, key string) ([]byte, error) {
 	// hash message
-	privKey := PrivateKeyFromInt(key)
+	var pkey *ecdsa.PrivateKey
+	pkey = PrivateKeyFromHexString(key)
 	digest := sha256.Sum256(data)
 
 	// sign the hash
-	r, s, err := ecdsa.Sign(rand.Reader, privkey, digest[:])
+	r, s, err := ecdsa.Sign(rand.Reader, pkey, digest[:])
 	if err != nil {
 		return nil, err
 	}
 
 	// encode the signature {R, S}
 	// big.Int.Bytes() will need padding in the case of leading zero bytes
-	params := privkey.Curve.Params()
+	params := pkey.Curve.Params()
 	curveOrderByteSize := params.P.BitLen() / 8
 	rBytes, sBytes := r.Bytes(), s.Bytes()
 	signature := make([]byte, curveOrderByteSize*2)
@@ -629,3 +635,4 @@ func Sign(data []byte, key int64) ([]byte, error) {
 
 	return signature, nil
 }
+
