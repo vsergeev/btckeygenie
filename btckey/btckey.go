@@ -44,6 +44,12 @@ type PrivateKey struct {
 	D *big.Int
 }
 
+func NewPrivateKey(d *big.Int) (*PrivateKey) {
+	key := &PrivateKey{D: d}
+	key.derive()
+	return key
+}
+
 // derive derives a Bitcoin public key from a Bitcoin private key.
 func (priv *PrivateKey) derive() (pub *PublicKey) {
 	/* See Certicom's SEC1 3.2.1, pg.23 */
