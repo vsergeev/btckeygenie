@@ -1,4 +1,12 @@
-# btckeygenie v1.0.0
+# btckeygenie
+
+## Disclaimer
+
+**This project was written in May 2013 for educational purposes.**
+
+**Modern cryptocurrency wallets should use hierarchical deterministic (HD) keys instead.**
+
+## Introduction
 
 btckeygenie is a standalone Bitcoin keypair/address generator written in Go.
 btckeygenie generates an ECDSA secp256k1 keypair, dumps the public key in
@@ -62,23 +70,10 @@ Donations are welcome at `15PKyTs3jJ3Nyf3i6R7D9tfGCY1ZbtqWdv` :-)
 
 ## Installation
 
-AUR package: <https://aur.archlinux.org/packages/btckeygenie/>
-
 To fetch, build, and install btckeygenie to `$GOPATH/bin`:
 
     $ go get github.com/vsergeev/btckeygenie
 
-To build btckeygenie locally:
-
-    $ git clone https://github.com/vsergeev/btckeygenie.git
-    $ cd btckeygenie
-    $ go build
-
-## Issues
-
-Feel free to report any issues, bug reports, or suggestions at github or by email at vsergeev at gmail.
-
 ## License
 
 btckeygenie is MIT licensed. See the included `LICENSE` file for more details.
-
